@@ -10,8 +10,8 @@ from crazerace.http.error import BadRequestError
 from crazerace.http.instrumentation import trace
 
 # Internal modules
-from app.config import status
 from app.service import health
+
 
 @trace("controller")
 def check_health() -> flask.Response:

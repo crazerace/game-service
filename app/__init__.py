@@ -7,19 +7,26 @@ from uuid import uuid4
 
 # 3rd party modules.
 import flask
+import werkzeug
 from flask import Flask, jsonify, make_response, request
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from crazerace.http import status, instrumentation
+from crazerace.http.error import RequestError, NotFoundError
 
 # Internal modules
-from app.config import AppConfig, status
+from app.config import AppConfig
 from app.config import REQUEST_ID_HEADER, SERVICE_NAME, SERVER_NAME
-from app.error import RequestError
 
 
 app = Flask(SERVICE_NAME)
 app.config.from_object(AppConfig)
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 
 from app import routes
+from app import models
 
 
 _log = logging.getLogger("RequestLogger")
@@ -29,11 +36,7 @@ error_log = logging.getLogger("ErrorHandler")
 @app.before_request
 def add_request_id() -> None:
     """Adds a request id to an incomming request."""
-    incomming_id: Optional[str] = request.headers.get(REQUEST_ID_HEADER)
-    request.id = incomming_id or str(uuid4()).lower()
-    _log.info(
-        f"Incomming request {request.method} {request.path} requestId=[{request.id}]"
-    )
+    instrumentation.add_request_id()
 
 
 @app.after_request
@@ -43,7 +46,7 @@ def add_request_id_to_response(response: flask.Response) -> flask.Response:
     :param response: Response to add header to.
     :return: Response with header.
     """
-    response.headers[REQUEST_ID_HEADER] = request.id
+    response.headers[instrumentation.REQUEST_ID_HEADER] = request.id
     response.headers["Server"] = SERVER_NAME
     response.headers["Date"] = f"{datetime.utcnow()}"
     return response
@@ -62,3 +65,13 @@ def handle_request_error(error: RequestError) -> flask.Response:
         error_log.info(str(error))
     json_error = jsonify(error.asdict())
     return make_response(json_error, error.status())
+
+
+@app.errorhandler(404)
+def handle_not_found(err: werkzeug.exceptions.NotFound) -> flask.Response:
+    """Handles 404 errors.
+
+    :return: flask.Response indicating the encountered error.
+    """
+    error = NotFoundError()
+    return make_response(jsonify(error.asdict()), error.status())
