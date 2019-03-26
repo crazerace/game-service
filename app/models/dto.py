@@ -9,6 +9,22 @@ from crazerace.http.error import BadRequestError
 
 
 @dataclass
+class QuestionText:
+    id: str
+    text: str
+    text_en: str
+    created_at: datetime
+
+    def todict(self) -> Dict[str, str]:
+        return {
+            "id": self.id,
+            "text": self.text,
+            "text_en": self.text_en,
+            "created_at": f"{self.created_at}",
+        }
+
+
+@dataclass
 class QuestionDTO:
     id: str
     latitude: float
@@ -61,6 +77,11 @@ class QuestionDTO:
             "answer_en": self.answer_en,
             "created_at": f"{self.created_at}",
         }
+
+    def only_question(self) -> QuestionText:
+        return QuestionText(
+            id=self.id, text=self.text, text_en=self.text_en, created_at=self.created_at
+        )
 
 
 def _new_id() -> str:

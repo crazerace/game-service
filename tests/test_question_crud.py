@@ -111,7 +111,20 @@ def test_get_question():
         assert res.status_code == status.HTTP_200_OK
         body = res.get_json()
         assert body["id"] == question_id
+        assert "latitude" not in body
+        assert "longitude" not in body
+        assert "answer" not in body
+        assert "answer_en" not in body
+
+        admin_headers = headers(new_id(), "ADMIN")
+        res = client.get(f"/v1/questions/{question_id}", headers=admin_headers)
+        assert res.status_code == status.HTTP_200_OK
+        body = res.get_json()
+        assert body["id"] == question_id
+        assert body["latitude"] == 52.1
         assert body["longitude"] == 52.1
+        assert body["answer"] == "Street 123"
+        assert body["answer_en"] == "Street 123"
 
         not_found_res = client.get(f"/v1/questions/{new_id()}", headers=headers_ok)
         assert not_found_res.status_code == status.HTTP_404_NOT_FOUND

@@ -33,4 +33,9 @@ def add_question() -> flask.Response:
 @trace("controller")
 def get_question(question_id: str) -> flask.Response:
     question = question_service.get_question(question_id)
-    return http.create_response(question.todict())
+    body = (
+        question.todict()
+        if request.role == "ADMIN"
+        else question.only_question().todict()
+    )
+    return http.create_response(body)
