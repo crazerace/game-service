@@ -28,3 +28,9 @@ def add_question() -> flask.Response:
     question = QuestionDTO.fromdict(body)
     question_service.add_question(question)
     return http.create_ok_response()
+
+
+@trace("controller")
+def get_question(question_id: str) -> flask.Response:
+	question = question_service.get_question(question_id)
+	return http.create_response(question)

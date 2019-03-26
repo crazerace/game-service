@@ -7,6 +7,7 @@ from crazerace.http import status
 # Intenal modules
 from tests import TestEnvironment, JSON, headers, new_id
 from app.repository import question_repo
+from app.models import Question
 
 
 def test_add_question():
@@ -74,3 +75,22 @@ def test_add_question_403_401_and_400():
             "/v1/questions", data=question, headers=headers_ok, content_type=JSON
         )
         assert res_bad_req_2.status_code == status.HTTP_400_BAD_REQUEST
+
+def test_get_question():
+    question_id: str = new_id()
+
+    question = Question(
+        id=question_id,
+        latitude=52.1,
+        longitude=52.1,
+        text="Här ligger den här grejen",
+        text_en="English thing",
+        answer="Street 123",
+        answer_en="Street 123"
+    )
+
+    with TestEnvironment([question]) as client:
+        res = client.get(
+            f"/v1/questions/{question_id}"
+        )
+        assert res.status == status.HTTP_200_OK

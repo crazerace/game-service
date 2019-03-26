@@ -69,7 +69,7 @@ class Question(db.Model):  # type: ignore
             f"text_en={self.text_en} "
             f"answer={self.answer} "
             f"answer_en={self.answer_en} "
-            f"created_at={self.created_at}"
+            f"created_at={self.created_at})"
         )
 
 

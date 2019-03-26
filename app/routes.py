@@ -57,7 +57,7 @@ def add_user_position(game_id: str, member_id: str) -> flask.Response:
 # Get question
 @app.route("/v1/questions/<question_id>", methods=["GET"])
 def get_question(question_id: str) -> flask.Response:
-    return http.create_ok_response()
+    return controller.get_question(question_id)
 
 
 # Create question

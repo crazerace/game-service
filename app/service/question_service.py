@@ -12,7 +12,11 @@ def add_question(new_q: QuestionDTO) -> None:
         text=new_q.text,
         text_en=new_q.text_en,
         answer=new_q.answer,
-        answer_en=new_q.answer_en
+        answer_en=new_q.answer_en,
+        created_at=new_q.created_at
     )
 
     question_repo.save(question)
+
+def get_question(question_id: str) -> QuestionDTO:
+    question = Question.query.filter(Question.id == question_id).first()
