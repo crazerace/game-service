@@ -93,4 +93,4 @@ def test_get_question():
         res = client.get(
             f"/v1/questions/{question_id}"
         )
-        assert res.status == status.HTTP_200_OK
+        assert res.status_code == status.HTTP_200_OK

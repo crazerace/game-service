@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict
+from uuid import uuid4
 
 # 3rd party libraries
 from crazerace.http.error import BadRequestError
@@ -9,6 +10,7 @@ from crazerace.http.error import BadRequestError
 
 @dataclass
 class QuestionDTO:
+    id: str
     latitude: float
     longitude: float
     text: str
@@ -19,6 +21,7 @@ class QuestionDTO:
 
     @classmethod
     def fromdict(cls, raw: Dict[str, Any]) -> "QuestionDTO":
+        question_id = raw.get("id") or _new_id()
         latitude = raw["latitude"]
         longitude = raw["longitude"]
         text = raw["text"]
@@ -27,7 +30,8 @@ class QuestionDTO:
         answer_en = raw["answer_en"]
 
         if not (
-            isinstance(latitude, float)
+            isinstance(question_id, str)
+            and isinstance(latitude, float)
             and isinstance(longitude, float)
             and isinstance(text, str)
             and isinstance(text_en, str)
@@ -36,6 +40,7 @@ class QuestionDTO:
         ):
             raise BadRequestError("Incorrect field types")
         return cls(
+            id=question_id,
             latitude=latitude,
             longitude=longitude,
             text=text,
@@ -44,3 +49,19 @@ class QuestionDTO:
             answer_en=answer_en,
             created_at=datetime.utcnow(),
         )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "text": self.text,
+            "text_en": self.text_en,
+            "answer": self.answer,
+            "answer_en": self.answer_en,
+            "created_at": f"{self.created_at}",
+        }
+
+
+def _new_id() -> str:
+    return str(uuid4()).lower()

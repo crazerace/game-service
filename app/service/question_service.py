@@ -6,7 +6,7 @@ from app.service import util
 
 def add_question(new_q: QuestionDTO) -> None:
     question = Question(
-        id=util.new_id(),
+        id=new_q.id,
         latitude=new_q.latitude,
         longitude=new_q.longitude,
         text=new_q.text,
@@ -19,4 +19,14 @@ def add_question(new_q: QuestionDTO) -> None:
     question_repo.save(question)
 
 def get_question(question_id: str) -> QuestionDTO:
-    question = Question.query.filter(Question.id == question_id).first()
+    question = question_repo.find(question_id)
+    return QuestionDTO(
+        id=question.id,
+        latitude=question.latitude,
+        longitude=question.longitude,
+        text=question.text,
+        text_en=question.text_en,
+        answer=question.answer,
+        answer_en=question.answer_en,
+        created_at=question.created_at
+    )
