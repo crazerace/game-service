@@ -4,9 +4,11 @@ from typing import Any, Dict
 # 3rd party modules.
 import flask
 from crazerace import http
+from crazerace.http.security import secured
 
 # Internal modules
 from app import app
+from app.config import JWT_SECRET
 from app import controller
 
 
@@ -60,7 +62,8 @@ def get_question(question_id: str) -> flask.Response:
 
 # Create question
 @app.route("/v1/questions", methods=["POST"])
-def create_question(question_id: str) -> flask.Response:
+@secured(JWT_SECRET, roles=["ADMIN"])
+def create_question() -> flask.Response:
     return http.create_ok_response()
 
 
