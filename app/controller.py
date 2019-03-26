@@ -32,5 +32,5 @@ def add_question() -> flask.Response:
 
 @trace("controller")
 def get_question(question_id: str) -> flask.Response:
-	question = question_service.get_question(question_id)
-	return http.create_response(question.to_dict())
+    question = question_service.get_question(question_id)
+    return http.create_response(question.todict())

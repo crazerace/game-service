@@ -6,6 +6,7 @@ from functools import wraps
 
 # 3rd party modules
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import FlushError
 from crazerace.http.error import DatabaseError
 
 # Internal modules
@@ -20,7 +21,7 @@ def handle_error(
         def decorated(*args, **kwargs) -> Any:
             try:
                 return f(*args, **kwargs)
-            except IntegrityError as e:
+            except (IntegrityError, FlushError) as e:
                 if integrity_error_class:
                     logger.info(str(e))
                     raise integrity_error_class()

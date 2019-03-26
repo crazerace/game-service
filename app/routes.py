@@ -54,13 +54,12 @@ def add_user_position(game_id: str, member_id: str) -> flask.Response:
     return http.create_ok_response()
 
 
-# Get question
 @app.route("/v1/questions/<question_id>", methods=["GET"])
+@secured(JWT_SECRET)
 def get_question(question_id: str) -> flask.Response:
     return controller.get_question(question_id)
 
 
-# Create question
 @app.route("/v1/questions", methods=["POST"])
 @secured(JWT_SECRET, roles=["ADMIN"])
 def create_question() -> flask.Response:

@@ -11,20 +11,21 @@ from app.models import Question
 
 
 def test_add_question():
-    question = json.dumps(
-        {
-            "latitude": 52.1,
-            "longitude": 52.1,
-            "text": "Här ligger den här grejen",
-            "text_en": "This is where this thing is",
-            "answer": "Online Street 1337",
-            "answer_en": "Online Street 1337",
-        }
-    )
+    question = {
+        "latitude": 52.1,
+        "longitude": 52.1,
+        "text": "Här ligger den här grejen",
+        "text_en": "This is where this thing is",
+        "answer": "Online Street 1337",
+        "answer_en": "Online Street 1337",
+    }
     with TestEnvironment() as client:
         headers_ok = headers(new_id(), "ADMIN")
         res = client.post(
-            "/v1/questions", data=question, headers=headers_ok, content_type=JSON
+            "/v1/questions",
+            data=json.dumps(question),
+            headers=headers_ok,
+            content_type=JSON,
         )
         assert res.status_code == status.HTTP_200_OK
         body = res.get_json()
@@ -33,6 +34,18 @@ def test_add_question():
         assert len(questions) == 1
         assert questions[0].latitude == 52.1
         assert questions[0].answer == "Online Street 1337"
+        question_id = questions[0].id
+        assert question_id is not None
+
+        # Test that posting a question wit the same id fails with 409
+        question["id"] = question_id
+        res = client.post(
+            "/v1/questions",
+            data=json.dumps(question),
+            headers=headers_ok,
+            content_type=JSON,
+        )
+        assert res.status_code == status.HTTP_409_CONFLICT
 
 
 def test_add_question_403_401_and_400():
@@ -76,9 +89,9 @@ def test_add_question_403_401_and_400():
         )
         assert res_bad_req_2.status_code == status.HTTP_400_BAD_REQUEST
 
+
 def test_get_question():
     question_id: str = new_id()
-
     question = Question(
         id=question_id,
         latitude=52.1,
@@ -86,11 +99,20 @@ def test_get_question():
         text="Här ligger den här grejen",
         text_en="English thing",
         answer="Street 123",
-        answer_en="Street 123"
+        answer_en="Street 123",
     )
 
     with TestEnvironment([question]) as client:
-        res = client.get(
-            f"/v1/questions/{question_id}"
-        )
+        res_unauthorized = client.get(f"/v1/questions/{question_id}")
+        assert res_unauthorized.status_code == status.HTTP_401_UNAUTHORIZED
+
+        headers_ok = headers(new_id())
+        res = client.get(f"/v1/questions/{question_id}", headers=headers_ok)
         assert res.status_code == status.HTTP_200_OK
+        body = res.get_json()
+        assert body["id"] == question_id
+        assert body["longitude"] == 52.1
+
+        not_found_res = client.get(f"/v1/questions/{new_id()}", headers=headers_ok)
+        assert not_found_res.status_code == status.HTTP_404_NOT_FOUND
+

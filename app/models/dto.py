@@ -50,7 +50,7 @@ class QuestionDTO:
             created_at=datetime.utcnow(),
         )
 
-    def to_dict(self):
+    def todict(self) -> Dict[str, Any]:
         return {
             "id": self.id,
             "latitude": self.latitude,
