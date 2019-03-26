@@ -64,7 +64,7 @@ def get_question(question_id: str) -> flask.Response:
 @app.route("/v1/questions", methods=["POST"])
 @secured(JWT_SECRET, roles=["ADMIN"])
 def create_question() -> flask.Response:
-    return http.create_ok_response()
+    return controller.add_question()
 
 
 @app.route("/health", methods=["GET"])

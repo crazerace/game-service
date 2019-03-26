@@ -28,13 +28,12 @@ def test_add_question():
         body = res.get_json()
 
 
-def test_add_question_401_and_403():
+def test_add_question_403_401_and_400():
     question = json.dumps(
         {
             "latitude": 52.1,
             "longitude": 52.1,
-            "text": "Här ligger den här grejen",
-            "text_en": "This is where this thing is",
+            "text": "Här ligger den här grejen",  # text_en missing
             "answer": "Online Street 1337",
             "answer_en": "Online Street 1337",
         }
@@ -49,3 +48,23 @@ def test_add_question_401_and_403():
         res_unauth = client.post("/v1/questions", data=question, content_type=JSON)
         assert res_unauth.status_code == status.HTTP_401_UNAUTHORIZED
 
+        headers_ok = headers(new_id(), "ADMIN")
+        res_bad_req_1 = client.post(
+            "/v1/questions", data=question, headers=headers_ok, content_type=JSON
+        )
+        assert res_bad_req_1.status_code == status.HTTP_400_BAD_REQUEST
+
+        question = json.dumps(
+            {
+                "latitude": True,
+                "longitude": 52.1,
+                "text": "Här ligger den här grejen",
+                "text_en": "This is where that thing is",
+                "answer": "Online Street 1337",
+                "answer_en": "Online Street 1337",
+            }
+        )
+        res_bad_req_2 = client.post(
+            "/v1/questions", data=question, headers=headers_ok, content_type=JSON
+        )
+        assert res_bad_req_2.status_code == status.HTTP_400_BAD_REQUEST
