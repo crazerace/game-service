@@ -10,7 +10,7 @@ from crazerace.http.error import BadRequestError
 from crazerace.http.instrumentation import trace
 
 # Internal modules
-from app.service import health
+from app.service import health, question_service
 from app.models.dto import QuestionDTO
 
 
@@ -26,4 +26,5 @@ def add_question() -> flask.Response:
         "latitude", "longitude", "text", "text_en", "answer", "answer_en"
     )
     question = QuestionDTO.fromdict(body)
+    question_service.add_question(question)
     return http.create_ok_response()

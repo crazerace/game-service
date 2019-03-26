@@ -6,6 +6,7 @@ from crazerace.http import status
 
 # Intenal modules
 from tests import TestEnvironment, JSON, headers, new_id
+from app.repository import question_repo
 
 
 def test_add_question():
@@ -26,6 +27,11 @@ def test_add_question():
         )
         assert res.status_code == status.HTTP_200_OK
         body = res.get_json()
+
+        questions = question_repo.find_all()
+        assert len(questions) == 1
+        assert questions[0].latitude == 52.1
+        assert questions[0].answer == "Online Street 1337"
 
 
 def test_add_question_403_401_and_400():
