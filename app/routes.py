@@ -18,7 +18,6 @@ def create_game() -> flask.Response:
     return http.create_ok_response()
 
 
-# Add members to a game
 @app.route("/v1/games/<game_id>/members", methods=["POST"])
 @secured(JWT_SECRET)
 def add_game_member(game_id: str) -> flask.Response:

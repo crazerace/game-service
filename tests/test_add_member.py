@@ -11,7 +11,7 @@ from app.models import Game, GameMember
 from app.repository import game_repo
 
 
-def test_add_question():
+def test_add_game_member():
     game_id = new_id()
     game = Game(
         id=game_id,
