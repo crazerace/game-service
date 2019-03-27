@@ -30,7 +30,7 @@ class Position(db.Model):  # type: ignore
 
 class GameMember(db.Model):  # type: ignore
     id: str = db.Column(db.String(50), primary_key=True)
-    game_id: str = db.Column(db.String(50), nullable=False)
+    game_id: str = db.Column(db.String(50), db.ForeignKey("game.id"), nullable=False)
     user_id: str = db.Column(db.String(50), nullable=False)
     is_admin: bool = db.Boolean(db.Boolean, nullable=False, default=False)
     created_at: datetime = db.Column(
@@ -99,6 +99,7 @@ class Game(db.Model):  # type: ignore
     questions: List[GameQuestion] = db.relationship(
         "GameQuestion", backref="game", lazy=True
     )
+    members: List[GameMember] = db.relationship("GameMember", backref="game", lazy=True)
 
     def __repr__(self) -> str:
         return (
