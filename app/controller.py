@@ -10,7 +10,9 @@ from crazerace.http.error import BadRequestError
 from crazerace.http.instrumentation import trace
 
 # Internal modules
-from app.service import health, question_service
+from app.service import health
+from app.service import game_service
+from app.service import question_service
 from app.models.dto import QuestionDTO
 
 
@@ -18,6 +20,13 @@ from app.models.dto import QuestionDTO
 def check_health() -> flask.Response:
     health_status = health.check()
     return http.create_response(health_status)
+
+
+@trace("controller")
+def add_game_member(game_id: str) -> flask.Response:
+    user_id: str = request.user_id
+    game_service.add_game_member(game_id, user_id)
+    return http.create_ok_response()
 
 
 @trace("controller")
