@@ -43,6 +43,7 @@ def test_add_game_member():
         assert new_member.user_id == user_id
         assert new_member.game_id == game_id
         assert new_member.is_admin == False
+        assert new_member.is_ready == False
 
         # Cannot add the same user to a game again
         res_conflict = client.post(f"/v1/games/{game_id}/members", headers=headers_ok)

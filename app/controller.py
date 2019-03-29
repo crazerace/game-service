@@ -30,6 +30,13 @@ def add_game_member(game_id: str) -> flask.Response:
 
 
 @trace("controller")
+def set_game_member_as_ready(game_id: str, member_id: str) -> flask.Response:
+    user_id: str = request.user_id
+    game_service.set_game_member_as_ready(game_id, member_id, user_id)
+    return http.create_ok_response()
+
+
+@trace("controller")
 def add_question() -> flask.Response:
     body = get_request_body(
         "latitude", "longitude", "text", "text_en", "answer", "answer_en"
