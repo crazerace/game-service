@@ -5,25 +5,20 @@ from typing import Any, Dict, Optional
 import flask
 from flask import jsonify, make_response, request
 from crazerace import http
-from crazerace.http import status
+from crazerace.http import status, get_request_body
 from crazerace.http.error import BadRequestError
 from crazerace.http.instrumentation import trace
 
 # Internal modules
-<<<<<<< Updated upstream
 from app.service import health
-=======
-from app.service import health, question_service, game_service
+from app.service import health, game_service
 from app.models.dto import QuestionDTO, CreateGameDTO
->>>>>>> Stashed changes
 
 
 @trace("controller")
 def check_health() -> flask.Response:
     health_status = health.check()
     return http.create_response(health_status)
-<<<<<<< Updated upstream
-=======
 
 
 @trace("controller")
@@ -53,4 +48,3 @@ def create_game() -> flask.Response:
     game = CreateGameDTO.fromdict(body)
     game_service.create_game(game)
     return http.create_ok_response()
->>>>>>> Stashed changes

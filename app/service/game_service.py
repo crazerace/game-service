@@ -6,7 +6,7 @@ from crazerace.http.instrumentation import trace
 from app.models import Game
 from app.models.dto import CreateGameDTO
 from app.repository import game_repo
-from app.service import util
+
 
 @trace("game_service")
 def create_game(new_game: CreateGameDTO) -> None:
