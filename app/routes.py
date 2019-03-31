@@ -13,7 +13,7 @@ from app import controller
 # Create game
 @app.route("/v1/games", methods=["POST"])
 def create_game() -> flask.Response:
-    return http.create_ok_response()
+    return controller.create_game()
 
 
 # Add members to a game
