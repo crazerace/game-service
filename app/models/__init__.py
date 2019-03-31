@@ -29,9 +29,14 @@ class Position(db.Model):  # type: ignore
 
 
 class GameMember(db.Model):  # type: ignore
+    __table_args__ = (
+        db.UniqueConstraint("game_id", "user_id", name="unique_game_id_user_id"),
+    )
     id: str = db.Column(db.String(50), primary_key=True)
-    game_id: str = db.Column(db.String(50), nullable=False)
+    game_id: str = db.Column(db.String(50), db.ForeignKey("game.id"), nullable=False)
     user_id: str = db.Column(db.String(50), nullable=False)
+    is_admin: bool = db.Column(db.Boolean, nullable=False, default=False)
+    is_ready: bool = db.Column(db.Boolean, nullable=False, default=False)
     created_at: datetime = db.Column(
         db.DateTime, nullable=False, default=datetime.utcnow
     )
@@ -44,6 +49,7 @@ class GameMember(db.Model):  # type: ignore
             f"GameMember(id={self.id} "
             f"game_id={self.game_id} "
             f"user_id={self.user_id} "
+            f"is_admin={self.is_admin} "
             f"created_at={self.created_at})"
         )
 
@@ -69,7 +75,7 @@ class Question(db.Model):  # type: ignore
             f"text_en={self.text_en} "
             f"answer={self.answer} "
             f"answer_en={self.answer_en} "
-            f"created_at={self.created_at}"
+            f"created_at={self.created_at})"
         )
 
 
@@ -98,6 +104,7 @@ class Game(db.Model):  # type: ignore
     questions: List[GameQuestion] = db.relationship(
         "GameQuestion", backref="game", lazy=True
     )
+    members: List[GameMember] = db.relationship("GameMember", backref="game", lazy=True)
 
     def __repr__(self) -> str:
         return (

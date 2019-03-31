@@ -1,4 +1,4 @@
-rm -rf .pytest_cache
+rm ./.pytest_cache
 echo 'Checking types'
 mypy --ignore-missing-imports run.py
 

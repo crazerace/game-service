@@ -13,12 +13,29 @@ from crazerace.http.instrumentation import trace
 from app.service import health
 from app.service import health, game_service
 from app.models.dto import QuestionDTO, CreateGameDTO
+from app.service import game_service
+from app.service import question_service
+from app.models.dto import QuestionDTO
 
 
 @trace("controller")
 def check_health() -> flask.Response:
     health_status = health.check()
     return http.create_response(health_status)
+
+
+@trace("controller")
+def add_game_member(game_id: str) -> flask.Response:
+    user_id: str = request.user_id
+    game_service.add_game_member(game_id, user_id)
+    return http.create_ok_response()
+
+
+@trace("controller")
+def set_game_member_as_ready(game_id: str, member_id: str) -> flask.Response:
+    user_id: str = request.user_id
+    game_service.set_game_member_as_ready(game_id, member_id, user_id)
+    return http.create_ok_response()
 
 
 @trace("controller")

@@ -104,6 +104,5 @@ class CreateGameDTO:
         )
 
 
-
 def _new_id() -> str:
     return str(uuid4()).lower()
