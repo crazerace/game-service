@@ -36,6 +36,7 @@ class GameMember(db.Model):  # type: ignore
     game_id: str = db.Column(db.String(50), db.ForeignKey("game.id"), nullable=False)
     user_id: str = db.Column(db.String(50), nullable=False)
     is_admin: bool = db.Column(db.Boolean, nullable=False, default=False)
+    is_ready: bool = db.Column(db.Boolean, nullable=False, default=False)
     created_at: datetime = db.Column(
         db.DateTime, nullable=False, default=datetime.utcnow
     )

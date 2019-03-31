@@ -30,10 +30,10 @@ def get_game(game_id: str) -> flask.Response:
     return http.create_ok_response()
 
 
-# When all users are ready, game will start.
 @app.route("/v1/games/<game_id>/members/<member_id>/ready", methods=["PUT"])
+@secured(JWT_SECRET)
 def set_user_ready(game_id: str, member_id: str) -> flask.Response:
-    return http.create_ok_response()
+    return controller.set_game_member_as_ready(game_id, member_id)
 
 
 # Game master ends game
