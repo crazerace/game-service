@@ -1,4 +1,5 @@
 # Standard library
+from typing import List
 from uuid import uuid4
 
 # 3rd party modules
@@ -7,7 +8,7 @@ from crazerace.http.instrumentation import trace
 
 # Internal modules
 from app.models import Game, GameMember
-from app.models.dto import CreateGameDTO, GameDTO
+from app.models.dto import CreateGameDTO, GameDTO, GameMemberDTO
 from app.repository import game_repo, member_repo
 from app.service import util
 
@@ -33,9 +34,11 @@ def get_game(id: str) -> GameDTO:
     return GameDTO(
         id=game.id,
         name=game.name,
+        questions=len(game.questions),
         created_at=game.created_at,
         started_at=game.started_at,
         ended_at=game.ended_at,
+        members=_map_members_to_dto(game.members),
     )
 
 
@@ -70,3 +73,17 @@ def assert_valid_game_member(game_id: str, member_id: str, user_id: str) -> None
 
 def _new_id() -> str:
     return str(uuid4()).lower()
+
+
+def _map_members_to_dto(members: List[GameMember]) -> List[GameMemberDTO]:
+    return [
+        GameMemberDTO(
+            id=m.id,
+            game_id=m.game_id,
+            user_id=m.user_id,
+            is_admin=m.is_admin,
+            is_ready=m.is_ready,
+            created_at=m.created_at,
+        )
+        for m in members
+    ]

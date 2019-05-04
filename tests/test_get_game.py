@@ -127,8 +127,8 @@ def test_get_game():
         assert body["startedAt"] == f"{one_hour_ago}"
         assert body["endedAt"] == None
         assert body["status"] == "STARTED"
-        # assert body["questions"] == 2
-        # assert len(body["members"]) == 2
+        assert body["questions"] == 2
+        assert len(body["members"]) == 2
 
         headers_ok = headers("user-3")
         res_ok = client.get(f"/v1/games/{game_2_id}", headers=headers_ok)
@@ -140,8 +140,8 @@ def test_get_game():
         assert body["startedAt"] == None
         assert body["endedAt"] == None
         assert body["status"] == "CREATED"
-        # assert body["questions"] == 2
-        # assert len(body["members"]) == 2
+        assert body["questions"] == 1
+        assert len(body["members"]) == 2
 
         headers_ok = headers("user-3")
         res_ok = client.get(f"/v1/games/{game_3_id}", headers=headers_ok)
@@ -153,5 +153,9 @@ def test_get_game():
         assert body["startedAt"] == f"{one_hour_ago}"
         assert body["endedAt"] == f"{now}"
         assert body["status"] == "ENDED"
-        # assert body["questions"] == 2
-        # assert len(body["members"]) == 2
+        assert body["questions"] == 1
+        assert len(body["members"]) == 2
+
+        res_missing = client.get(f"/v1/games/{new_id()}", headers=headers_ok)
+        assert res_missing.status_code == status.HTTP_404_NOT_FOUND
+
