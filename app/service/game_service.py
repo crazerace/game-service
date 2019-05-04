@@ -1,14 +1,15 @@
-#Standard library
+# Standard library
 from uuid import uuid4
 
-#3rd party modules
-from crazerace.http.error import NotFoundError
+# 3rd party modules
+from crazerace.http.error import PreconditionRequiredError, ForbiddenError
 from crazerace.http.instrumentation import trace
 
 # Internal modules
 from app.models import Game, GameMember
 from app.models.dto import CreateGameDTO
-from app.repository import game_repo
+from app.repository import game_repo, member_repo
+from app.service import util
 
 
 @trace("game_service")
@@ -18,21 +19,10 @@ def create_game(new_game: CreateGameDTO, user_id: str) -> None:
         name=new_game.name,
         created_at=new_game.created_at,
         members=[
-            GameMember(
-                id=_new_id(), user_id=user_id, game_id=new_game.game_id, is_admin=True, 
-            )
-        ]
+            GameMember(id=_new_id(), user_id=user_id, game_id=new_game.game_id, is_admin=True)
+        ],
     )
     game_repo.save(game)
-
-# 3rd party modules
-from crazerace.http.error import PreconditionRequiredError, ForbiddenError
-from crazerace.http.instrumentation import trace
-
-# Internal modules
-from app.models import Game, GameMember
-from app.repository import game_repo, member_repo
-from app.service import util
 
 
 @trace("game_service")
@@ -59,9 +49,7 @@ def assert_valid_game_member(game_id: str, member_id: str, user_id: str) -> None
     assert_game_exists(game_id)
     member = member_repo.find(member_id)
     if not member:
-        raise PreconditionRequiredError(
-            f"Game member with id={member_id} does not exit"
-        )
+        raise PreconditionRequiredError(f"Game member with id={member_id} does not exit")
     if member.user_id != user_id:
         raise ForbiddenError("Cannot set another user as ready")
 
