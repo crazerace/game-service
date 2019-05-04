@@ -26,6 +26,7 @@ def add_game_member(game_id: str) -> flask.Response:
 
 # Get all state info about a game
 @app.route("/v1/games/<game_id>", methods=["GET"])
+@secured(JWT_SECRET)
 def get_game(game_id: str) -> flask.Response:
     return http.create_ok_response()
 
