@@ -84,5 +84,25 @@ class QuestionDTO:
         )
 
 
+@dataclass
+class CreateGameDTO:
+    game_id: str
+    name: str
+    created_at: datetime
+
+    @classmethod
+    def fromdict(cls, raw: Dict[str, Any]) -> "CreateGameDTO":
+        name = raw["name"]
+        if not(
+            isinstance(name, str)
+        ):
+            raise BadRequestError("Incorrect field types")
+        return cls(
+            game_id = raw.get("id") or _new_id(),
+            name=name,
+            created_at=datetime.utcnow(),
+        )
+
+
 def _new_id() -> str:
     return str(uuid4()).lower()
