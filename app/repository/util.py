@@ -40,12 +40,3 @@ def _raise_database_error(logger: Logger, e: Exception) -> None:
     logger.error(err.full_message())
     db.session.rollback()
     raise err
-
-
-def sanitize_string(original):
-    """Removes sql special characters from a string.
-
-    :param original: Original string to santize
-    :return: Sanitized string.
-    """
-    return re.sub("[%;\\_]", "", original)
