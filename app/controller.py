@@ -11,6 +11,8 @@ from crazerace.http.instrumentation import trace
 
 # Internal modules
 from app.service import health
+from app.service import health, game_service
+from app.models.dto import QuestionDTO, CreateGameDTO
 from app.service import game_service
 from app.service import question_service
 from app.models.dto import QuestionDTO
@@ -55,3 +57,12 @@ def get_question(question_id: str) -> flask.Response:
         else question.only_question().todict()
     )
     return http.create_response(body)
+
+
+@trace("controller")
+def create_game() -> flask.Response:
+    user_id = request.user_id
+    body = get_request_body("name")
+    game = CreateGameDTO.fromdict(body)
+    game_service.create_game(game, user_id)
+    return http.create_ok_response()
