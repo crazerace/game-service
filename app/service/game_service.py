@@ -1,19 +1,27 @@
+#Standard library
+from uuid import uuid4
+
 #3rd party modules
 from crazerace.http.error import NotFoundError
 from crazerace.http.instrumentation import trace
 
 # Internal modules
-from app.models import Game
+from app.models import Game, GameMember
 from app.models.dto import CreateGameDTO
 from app.repository import game_repo
 
 
 @trace("game_service")
-def create_game(new_game: CreateGameDTO) -> None:
+def create_game(new_game: CreateGameDTO, user_id: str) -> None:
     game = Game(
         id=new_game.game_id,
         name=new_game.name,
-        created_at=new_game.created_at
+        created_at=new_game.created_at,
+        members=[
+            GameMember(
+                id=_new_id(), user_id=user_id, game_id=new_game.game_id, is_admin=True, 
+            )
+        ]
     )
     game_repo.save(game)
 
@@ -57,3 +65,6 @@ def assert_valid_game_member(game_id: str, member_id: str, user_id: str) -> None
     if member.user_id != user_id:
         raise ForbiddenError("Cannot set another user as ready")
 
+
+def _new_id() -> str:
+    return str(uuid4()).lower()

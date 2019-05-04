@@ -61,7 +61,8 @@ def get_question(question_id: str) -> flask.Response:
 
 @trace("controller")
 def create_game() -> flask.Response:
-    body = get_request_body("name", "id")
+    user_id = request.user_id
+    body = get_request_body("name")
     game = CreateGameDTO.fromdict(body)
-    game_service.create_game(game)
+    game_service.create_game(game, user_id)
     return http.create_ok_response()

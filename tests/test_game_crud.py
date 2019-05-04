@@ -5,7 +5,7 @@ import json
 from crazerace.http import status
 
 # Intenal modules
-from tests import TestEnvironment, JSON
+from tests import TestEnvironment, JSON, headers, new_id
 from app.repository import game_repo
 
 
@@ -19,7 +19,8 @@ def test_create_game():
                 "id": "asd123"
             }
         )
-        res = client.post("/v1/games", data=game, content_type=JSON)
+        headers_ok = headers(new_id())
+        res = client.post("/v1/games", data=game, content_type=JSON, headers=headers_ok)
         assert res.status_code == status.HTTP_200_OK
 
         game = game_repo.find("asd123")
@@ -32,7 +33,7 @@ def test_create_game():
                 "name": True,
             }
         )
-        res_bad_req = client.post("/v1/games", data=game, content_type=JSON)
+        res_bad_req = client.post("/v1/games", data=game, content_type=JSON, headers=headers_ok)
         assert res_bad_req.status_code == status.HTTP_400_BAD_REQUEST
 
         #Duplicate game id
@@ -42,6 +43,6 @@ def test_create_game():
                 "id": "asd123"
             }
         )
-        res_dup_game_id = client.post("/v1/games", data=game, content_type=JSON)
+        res_dup_game_id = client.post("/v1/games", data=game, content_type=JSON, headers=headers_ok)
         assert res_dup_game_id.status_code == status.HTTP_409_CONFLICT
 
