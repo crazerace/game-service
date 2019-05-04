@@ -64,5 +64,5 @@ def create_game() -> flask.Response:
 
 @trace("controller")
 def get_game(game_id: str) -> flask.Response:
-    # game = game_service.create_game(game_id)
-    return http.create_response()
+    game = game_service.get_game(game_id)
+    return http.create_response(game.todict())

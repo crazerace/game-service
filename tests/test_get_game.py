@@ -136,8 +136,9 @@ def test_get_game():
         body = res_ok.get_json()
         assert body["id"] == game_2_id
         assert body["name"] == "Game Two"
-        assert body["createdAt"] == f"{two_hours_ago}"
+        assert body["createdAt"] == f"{one_hour_ago}"
         assert body["startedAt"] == None
+        assert body["endedAt"] == None
         assert body["status"] == "CREATED"
         # assert body["questions"] == 2
         # assert len(body["members"]) == 2

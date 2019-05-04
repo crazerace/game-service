@@ -1,7 +1,7 @@
 # Standard library
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from uuid import uuid4
 
 # 3rd party libraries
@@ -93,15 +93,35 @@ class CreateGameDTO:
     @classmethod
     def fromdict(cls, raw: Dict[str, Any]) -> "CreateGameDTO":
         name = raw["name"]
-        if not(
-            isinstance(name, str)
-        ):
+        if not (isinstance(name, str)):
             raise BadRequestError("Incorrect field types")
-        return cls(
-            game_id = raw.get("id") or _new_id(),
-            name=name,
-            created_at=datetime.utcnow(),
-        )
+        return cls(game_id=raw.get("id") or _new_id(), name=name, created_at=datetime.utcnow())
+
+
+@dataclass
+class GameDTO:
+    id: str
+    name: str
+    created_at: datetime
+    started_at: Optional[datetime]
+    ended_at: Optional[datetime]
+
+    def status(self) -> str:
+        if self.ended_at:
+            return "ENDED"
+        if self.started_at:
+            return "STARTED"
+        return "CREATED"
+
+    def todict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "status": self.status(),
+            "createdAt": f"{self.created_at}",
+            "startedAt": f"{self.started_at}" if self.started_at else None,
+            "endedAt": f"{self.ended_at}" if self.ended_at else None,
+        }
 
 
 def _new_id() -> str:
