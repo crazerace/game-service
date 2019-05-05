@@ -1,9 +1,16 @@
 # Standard library
+from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
 
 # Internal modules
 from app import db
+
+
+@dataclass
+class GeoPosition:
+    latitude: float
+    longitude: float
 
 
 class Position(db.Model):  # type: ignore
@@ -22,6 +29,9 @@ class Position(db.Model):  # type: ignore
             f"longitude={self.longitude} "
             f"created_at={self.created_at})"
         )
+
+    def geo_position(self) -> GeoPosition:
+        return GeoPosition(latitude=self.latitude, longitude=self.longitude)
 
 
 class GameMember(db.Model):  # type: ignore
@@ -65,6 +75,9 @@ class Question(db.Model):  # type: ignore
             f"answer_en={self.answer_en} "
             f"created_at={self.created_at})"
         )
+
+    def geo_position(self) -> GeoPosition:
+        return GeoPosition(latitude=self.latitude, longitude=self.longitude)
 
 
 class GameQuestion(db.Model):  # type: ignore
