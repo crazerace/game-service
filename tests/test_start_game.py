@@ -19,8 +19,8 @@ def test_start_game():
 
     q_old = Question(
         id=new_id(),
-        latitude=52.1231,
-        longitude=52.1231,
+        latitude=59.318130,
+        longitude=18.063660,
         text="t-old",
         text_en="t-old-en",
         answer="a-old",
@@ -28,8 +28,8 @@ def test_start_game():
     )
     q1 = Question(
         id=new_id(),
-        latitude=52.1231,
-        longitude=52.1231,
+        latitude=59.318134,
+        longitude=18.063666,
         text="t1",
         text_en="t1-en",
         answer="a1",
@@ -37,8 +37,8 @@ def test_start_game():
     )
     q2 = Question(
         id=new_id(),
-        latitude=52.1232,
-        longitude=52.1232,
+        latitude=59.316556,
+        longitude=18.033478,
         text="t2",
         text_en="t2-en",
         answer="a2",
@@ -46,8 +46,8 @@ def test_start_game():
     )
     q3 = Question(
         id=new_id(),
-        latitude=52.1233,
-        longitude=52.1233,
+        latitude=59.316709,
+        longitude=17.984827,
         text="t3",
         text_en="t3-en",
         answer="a3",
@@ -55,8 +55,8 @@ def test_start_game():
     )
     q4 = Question(
         id=new_id(),
-        latitude=52.1234,
-        longitude=52.1234,
+        latitude=59.299720,
+        longitude=17.989498,
         text="t4",
         text_en="t4-en",
         answer="a4",
@@ -84,7 +84,7 @@ def test_start_game():
     )
 
     game_id = new_id()
-    game = Game(
+    new_game = Game(
         id=game_id,
         name="New name",
         created_at=now,
@@ -100,12 +100,22 @@ def test_start_game():
         ],
     )
 
-    with TestEnvironment([q_old, q1, q2, q3, q4, old_game, game]) as client:
+    with TestEnvironment([q_old, q1, q2, q3, q4, old_game, new_game]) as client:
         headers_ok = headers(owner_id)
         res_ok = client.put(
             f"/v1/games/{game_id}/start?lat=59.318329&long=18.042192", headers=headers_ok
         )
         assert res_ok.status_code == status.HTTP_200_OK
+        game = game_repo.find(game_id)
+        assert game is not None
+        questions = game.questions
+        assert len(questions) == 3
+        assert questions[0].question_id == q1.id
+        assert questions[1].question_id == q2.id
+        assert questions[2].question_id == q3.id
+        assert game.started_at is not None
+        assert game.started_at > now and game.started_at <= datetime.utcnow()
+        assert game.ended_at == None
 
 
 def test_start_game_bad_state():
