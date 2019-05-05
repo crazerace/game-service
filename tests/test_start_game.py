@@ -101,9 +101,139 @@ def test_start_game():
     )
 
     with TestEnvironment([q_old, q1, q2, q3, q4, old_game, game]) as client:
+        headers_ok = headers(owner_id)
+        res_ok = client.put(
+            f"/v1/games/{game_id}/start?lat=59.318329&long=18.042192", headers=headers_ok
+        )
+        assert res_ok.status_code == status.HTTP_200_OK
+
+
+def test_start_game_bad_state():
+    now = datetime.utcnow()
+    owner_id = new_id()
+    guest_id = new_id()
+
+    game_id = new_id()
+    not_ready_game = Game(
+        id=game_id,
+        name="Not ready name",
+        created_at=now,
+        members=[
+            GameMember(
+                id="member-not-ready-1",
+                game_id=game_id,
+                user_id=owner_id,
+                is_admin=True,
+                is_ready=True,
+                created_at=now,
+            ),
+            GameMember(
+                id="member-not-ready-2",
+                game_id=game_id,
+                user_id=new_id(),
+                is_admin=False,
+                is_ready=False,
+                created_at=now,
+            ),
+        ],
+    )
+
+    ready_game_id = new_id()
+    ready_game = Game(
+        id=ready_game_id,
+        name="Not ready name",
+        created_at=now,
+        members=[
+            GameMember(
+                id="member-ready-1",
+                game_id=ready_game_id,
+                user_id=owner_id,
+                is_admin=True,
+                is_ready=True,
+                created_at=now,
+            ),
+            GameMember(
+                id="member-ready-2",
+                game_id=ready_game_id,
+                user_id=guest_id,
+                is_admin=False,
+                is_ready=True,
+                created_at=now,
+            ),
+        ],
+    )
+
+    started_game_id = new_id()
+    started_game = Game(
+        id=started_game_id,
+        name="Not ready name",
+        created_at=now,
+        started_at=datetime.utcnow(),
+        members=[
+            GameMember(
+                id="member-started-1",
+                game_id=started_game_id,
+                user_id=owner_id,
+                is_admin=True,
+                is_ready=True,
+                created_at=now,
+            ),
+            GameMember(
+                id="member-started-2",
+                game_id=started_game_id,
+                user_id=guest_id,
+                is_admin=False,
+                is_ready=True,
+                created_at=now,
+            ),
+        ],
+    )
+    with TestEnvironment([not_ready_game, ready_game, started_game]) as client:
+        headers_ok = headers(owner_id)
+        res_missing_game = client.put(
+            f"/v1/games/{new_id()}/start?lat=59.318329&long=18.042192", headers=headers_ok
+        )
+        assert res_missing_game.status_code == status.HTTP_428_PRECONDITION_REQUIRED
+
+        res_unready = client.put(
+            f"/v1/games/{game_id}/start?lat=59.318329&long=18.042192", headers=headers_ok
+        )
+        assert res_unready.status_code == status.HTTP_428_PRECONDITION_REQUIRED
+
+        headers_guest = headers(guest_id)
+        res_forbidden = client.put(
+            f"/v1/games/{ready_game_id}/start?lat=59.318329&long=18.042192", headers=headers_guest
+        )
+        assert res_forbidden.status_code == status.HTTP_403_FORBIDDEN
+
+        res_already_started = client.put(
+            f"/v1/games/{started_game_id}/start?lat=59.318329&long=18.042192", headers=headers_ok
+        )
+        assert res_already_started.status_code == status.HTTP_409_CONFLICT
+
+
+def test_start_game_bad_request():
+    game_id = new_id()
+    with TestEnvironment() as client:
         res_unauthorized = client.put(f"/v1/games/{game_id}/start")
         assert res_unauthorized.status_code == status.HTTP_401_UNAUTHORIZED
 
-        headers_ok = headers(owner_id)
-        res_ok = client.put(f"/v1/games/{game_id}/start", headers=headers_ok)
-        assert res_ok.status_code == status.HTTP_200_OK
+        headers_ok = headers(new_id())
+        res_no_lat_long = client.put(f"/v1/games/{new_id()}/start", headers=headers_ok)
+        assert res_no_lat_long.status_code == status.HTTP_400_BAD_REQUEST
+
+        res_no_lat = client.put(f"/v1/games/{game_id}/start?long=10.112", headers=headers_ok)
+        assert res_no_lat.status_code == status.HTTP_400_BAD_REQUEST
+
+        res_no_long = client.put(f"/v1/games/{game_id}/start?lat=10.112", headers=headers_ok)
+        assert res_no_long.status_code == status.HTTP_400_BAD_REQUEST
+
+        res_wrong_lat_type = client.put(
+            f"/v1/games/{game_id}/start?lat=wrong&long=45.439", headers=headers_ok
+        )
+        assert res_wrong_lat_type.status_code == status.HTTP_400_BAD_REQUEST
+
+        res_wrong_long_type = client.put(
+            f"/v1/games/{game_id}/start?lat=43.11147&long=alsowrong", headers=headers_ok
+        )
+        assert res_wrong_long_type.status_code == status.HTTP_400_BAD_REQUEST
