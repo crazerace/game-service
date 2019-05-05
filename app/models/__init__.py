@@ -8,7 +8,7 @@ from app import db
 
 
 @dataclass
-class GeoPosition:
+class Coordinate:
     latitude: float
     longitude: float
 
@@ -30,8 +30,8 @@ class Position(db.Model):  # type: ignore
             f"created_at={self.created_at})"
         )
 
-    def geo_position(self) -> GeoPosition:
-        return GeoPosition(latitude=self.latitude, longitude=self.longitude)
+    def coordinate(self) -> Coordinate:
+        return Coordinate(latitude=self.latitude, longitude=self.longitude)
 
 
 class GameMember(db.Model):  # type: ignore
@@ -76,8 +76,8 @@ class Question(db.Model):  # type: ignore
             f"created_at={self.created_at})"
         )
 
-    def geo_position(self) -> GeoPosition:
-        return GeoPosition(latitude=self.latitude, longitude=self.longitude)
+    def coordinate(self) -> Coordinate:
+        return Coordinate(latitude=self.latitude, longitude=self.longitude)
 
 
 class GameQuestion(db.Model):  # type: ignore
