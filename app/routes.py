@@ -39,6 +39,7 @@ def set_user_ready(game_id: str, member_id: str) -> flask.Response:
 
 # Game master starts a game
 @app.route("/v1/games/<game_id>/start", methods=["PUT"])
+@secured(JWT_SECRET)
 def start_game(game_id: str) -> flask.Response:
     return http.create_ok_response()
 
