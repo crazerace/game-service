@@ -23,6 +23,12 @@ def add_member(member: GameMember) -> None:
 
 
 @trace("member_repo")
+def delete_member(member: GameMember) -> None:
+    db.session.delete(member)
+    db.session.commit()
+
+
+@trace("member_repo")
 @handle_error(logger=_log)
 def set_as_ready(id: str) -> None:
     member = find(id)

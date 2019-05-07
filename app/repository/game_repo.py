@@ -25,3 +25,10 @@ def save(game: Game) -> None:
 @trace("game_repo")
 def find(id: str) -> Optional[Game]:
     return Game.query.filter(Game.id == id).first()
+
+
+@trace("game_repo")
+def delete(id: str) -> None:
+    game = find(id)
+    db.session.delete(game)
+    db.session.commit()

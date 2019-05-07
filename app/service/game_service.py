@@ -28,6 +28,25 @@ def create_game(new_game: CreateGameDTO, user_id: str) -> None:
 
 
 @trace("game_service")
+def delete_game(game_id: str, user_id: str) -> None:
+    assert_game_exists(game_id)
+    game = game_repo.find(game_id)
+    _assert_user_is_game_admin(user_id, game)
+    if not game.started_at:
+        delete_all_game_members(game_id)
+        game_repo.delete(game_id)
+    else:
+        raise PreconditionRequiredError(f"Started games can't be deleted")
+
+
+@trace("game_service")
+def delete_all_game_members(game_id: str):
+    game = game_repo.find(game_id)
+    for member in game.members:
+        member_repo.delete_member(member)
+
+
+@trace("game_service")
 def add_game_member(game_id: str, user_id: str) -> None:
     assert_game_exists(game_id)
     member = GameMember(id=util.new_id(), game_id=game_id, user_id=user_id)
