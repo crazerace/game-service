@@ -26,8 +26,9 @@ def test_start_game():
         answer="a-old",
         answer_en="a-old-en",
     )
+    q1_id = new_id()
     q1 = Question(
-        id=new_id(),
+        id=q1_id,
         latitude=59.318134,
         longitude=18.063666,
         text="t1",
@@ -35,8 +36,9 @@ def test_start_game():
         answer="a1",
         answer_en="a1-en",
     )
+    q2_id = new_id()
     q2 = Question(
-        id=new_id(),
+        id=q2_id,
         latitude=59.316556,
         longitude=18.033478,
         text="t2",
@@ -44,8 +46,9 @@ def test_start_game():
         answer="a2",
         answer_en="a2-en",
     )
+    q3_id = new_id()
     q3 = Question(
-        id=new_id(),
+        id=q3_id,
         latitude=59.316709,
         longitude=17.984827,
         text="t3",
@@ -110,9 +113,9 @@ def test_start_game():
         assert game is not None
         questions = game.questions
         assert len(questions) == 3
-        assert questions[0].question_id == q1.id
-        assert questions[1].question_id == q2.id
-        assert questions[2].question_id == q3.id
+        assert questions[0].question_id == q1_id
+        assert questions[1].question_id == q2_id
+        assert questions[2].question_id == q3_id
         assert game.started_at is not None
         assert game.started_at > now and game.started_at <= datetime.utcnow()
         assert game.ended_at == None
@@ -212,12 +215,14 @@ def test_start_game_bad_state():
 
         headers_guest = headers(guest_id)
         res_forbidden = client.put(
-            f"/v1/games/{ready_game_id}/start?lat=59.318329&long=18.042192", headers=headers_guest
+            f"/v1/games/{ready_game_id}/start?lat=59.318329&long=18.042192",
+            headers=headers_guest,
         )
         assert res_forbidden.status_code == status.HTTP_403_FORBIDDEN
 
         res_already_started = client.put(
-            f"/v1/games/{started_game_id}/start?lat=59.318329&long=18.042192", headers=headers_ok
+            f"/v1/games/{started_game_id}/start?lat=59.318329&long=18.042192",
+            headers=headers_ok,
         )
         assert res_already_started.status_code == status.HTTP_409_CONFLICT
 
@@ -232,10 +237,14 @@ def test_start_game_bad_request():
         res_no_lat_long = client.put(f"/v1/games/{new_id()}/start", headers=headers_ok)
         assert res_no_lat_long.status_code == status.HTTP_400_BAD_REQUEST
 
-        res_no_lat = client.put(f"/v1/games/{game_id}/start?long=10.112", headers=headers_ok)
+        res_no_lat = client.put(
+            f"/v1/games/{game_id}/start?long=10.112", headers=headers_ok
+        )
         assert res_no_lat.status_code == status.HTTP_400_BAD_REQUEST
 
-        res_no_long = client.put(f"/v1/games/{game_id}/start?lat=10.112", headers=headers_ok)
+        res_no_long = client.put(
+            f"/v1/games/{game_id}/start?lat=10.112", headers=headers_ok
+        )
         assert res_no_long.status_code == status.HTTP_400_BAD_REQUEST
 
         res_wrong_lat_type = client.put(

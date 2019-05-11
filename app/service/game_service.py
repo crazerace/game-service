@@ -12,10 +12,10 @@ from crazerace.http.error import (
 from crazerace.http.instrumentation import trace
 
 # Internal modules
-from app.models import Game, GameMember, Coordinate
+from app.models import Game, GameMember, Coordinate, GameQuestion, Question
 from app.models.dto import CreateGameDTO, GameDTO, GameMemberDTO
 from app.repository import game_repo, member_repo
-from app.service import util
+from app.service import util, question_service
 
 
 @trace("game_service")
@@ -25,7 +25,9 @@ def create_game(new_game: CreateGameDTO, user_id: str) -> None:
         name=new_game.name,
         created_at=new_game.created_at,
         members=[
-            GameMember(id=_new_id(), user_id=user_id, game_id=new_game.game_id, is_admin=True)
+            GameMember(
+                id=_new_id(), user_id=user_id, game_id=new_game.game_id, is_admin=True
+            )
         ],
     )
     game_repo.save(game)
@@ -49,8 +51,11 @@ def get_game(id: str) -> GameDTO:
 
 @trace("game_service")
 def start_game(game_id: str, user_id: str, coordinate: Coordinate) -> None:
-    print(f"GameId={game_id} UserId={user_id} {coordinate}")
-    _assert_game_can_be_started(game_id, user_id)
+    game = _find_game_and_assert_can_be_started(game_id, user_id)
+    questions = question_service.find_questions(game, coordinate)
+    game_questions = _map_questions_to_game(game.id, questions)
+    game_repo.save_questions(game_questions)
+    game_repo.set_started(game)
 
 
 @trace("game_service")
@@ -83,7 +88,7 @@ def assert_valid_game_member(game_id: str, member_id: str, user_id: str) -> None
 
 
 @trace("game_service")
-def _assert_game_can_be_started(game_id: str, user_id: str) -> None:
+def _find_game_and_assert_can_be_started(game_id: str, user_id: str) -> Game:
     game = game_repo.find(game_id)
     if not game:
         raise PreconditionRequiredError(f"Game with id={game_id} does not exit")
@@ -91,12 +96,15 @@ def _assert_game_can_be_started(game_id: str, user_id: str) -> None:
     _assert_all_members_ready(game)
     if game.started_at is not None:
         raise ConflictError(f"Game with id={game_id} is already started")
+    return game
 
 
 def _assert_all_members_ready(game: Game) -> None:
     members_ready = [member.is_ready for member in game.members]
     if not all(members_ready):
-        raise PreconditionRequiredError(f"All members are not ready in game with id={game.id}")
+        raise PreconditionRequiredError(
+            f"All members are not ready in game with id={game.id}"
+        )
 
 
 def _assert_user_is_game_admin(user_id: str, game: Game) -> None:
@@ -122,3 +130,7 @@ def _map_members_to_dto(members: List[GameMember]) -> List[GameMemberDTO]:
         )
         for m in members
     ]
+
+
+def _map_questions_to_game(game_id: str, questions: List[Question]) -> List[GameQuestion]:
+    return [GameQuestion(game_id=game_id, question_id=q.id) for q in questions]

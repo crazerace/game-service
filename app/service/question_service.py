@@ -1,12 +1,17 @@
+# Standard library
+import random
+from typing import List
+
 # 3rd party modules
-from crazerace.http.error import NotFoundError
+from crazerace.http.error import NotFoundError, InternalServerError
 from crazerace.http.instrumentation import trace
 
 # Internal modules
-from app.models import Question
+from app.config import DEFAULT_NO_QUESTIONS, DEFAULT_MIN_DISTANCE, DEFAULT_MAX_DISTANCE
+from app.models import Question, Game, GameMember, Coordinate
 from app.models.dto import QuestionDTO
 from app.repository import question_repo
-from app.service import util
+from app.service import util, distance_util
 
 
 @trace("question_service")
@@ -39,3 +44,45 @@ def get_question(question_id: str) -> QuestionDTO:
         answer_en=question.answer_en,
         created_at=question.created_at,
     )
+
+
+@trace("question_service")
+def find_questions(game: Game, coordinate: Coordinate) -> List[Question]:
+    prev_ids = question_repo.find_previous_question_ids(game)
+    available_questions = question_repo.find_all(except_ids=prev_ids)
+    return _select_questions(available_questions, coordinate, DEFAULT_NO_QUESTIONS)
+
+
+def _select_questions(
+    questions: List[Question], origin: Coordinate, no_questions: int
+) -> List[Question]:
+    if len(questions) < no_questions:
+        raise InternalServerError("Not enough questions")
+    question = _select_question(questions, origin)
+    return (
+        [question]
+        if no_questions == 1
+        else [question]
+        + _select_questions(
+            _filter_questions(questions, question),
+            question.coordinate(),
+            no_questions - 1,
+        )
+    )
+
+
+def _select_question(questions: List[Question], origin: Coordinate) -> Question:
+    matching_questions = [
+        q
+        for q in questions
+        if distance_util.is_within(
+            origin, q.coordinate(), DEFAULT_MAX_DISTANCE, DEFAULT_MIN_DISTANCE
+        )
+    ]
+    if not matching_questions:
+        raise InternalServerError("No questions could be selected")
+    return random.choice(matching_questions)
+
+
+def _filter_questions(questions: List[Question], exclude: Question) -> List[Question]:
+    return [q for q in questions if q.id != exclude.id]
