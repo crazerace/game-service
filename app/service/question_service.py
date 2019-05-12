@@ -56,32 +56,55 @@ def find_questions_for_game(game: Game, coordinate: CoordinateDTO) -> List[Quest
 def _select_questions(
     questions: List[Question], origin: CoordinateDTO, no_questions: int
 ) -> List[Question]:
-    if len(questions) < no_questions:
-        raise InternalServerError("Not enough questions")
-    question = _select_question(questions, origin)
-    return (
-        [question]
-        if no_questions <= 1
-        else [question]
-        + _select_questions(
-            _filter_questions(questions, question),
-            question.coordinate(),
-            no_questions - 1,
-        )
+    _assert_engough_questions(questions, no_questions)
+    selected: List[Question] = []
+    for _ in range(no_questions):
+        question = _select_question(questions, origin, selected)
+        origin = question.coordinate()
+        selected += [question]
+    return selected
+
+
+def _select_question(
+    questions: List[Question], origin: CoordinateDTO, previous: List[Question]
+) -> Question:
+    matching_questions = _select_questions_within(
+        questions, origin, DEFAULT_MIN_DISTANCE, DEFAULT_MAX_DISTANCE, previous
     )
-
-
-def _select_question(questions: List[Question], origin: CoordinateDTO) -> Question:
-    matching_questions = [
-        q
-        for q in questions
-        if distance_util.is_within(
-            origin, q.coordinate(), DEFAULT_MAX_DISTANCE, DEFAULT_MIN_DISTANCE
-        )
-    ]
     if not matching_questions:
         raise InternalServerError("No questions could be selected")
     return random.choice(matching_questions)
+
+
+def _select_questions_within(
+    questions: List[Question],
+    origin: CoordinateDTO,
+    min_dist: int,
+    max_dist: int,
+    previous: List[Question],
+) -> List[Question]:
+    matches = [
+        q
+        for q in questions
+        if distance_util.is_within(origin, q.coordinate(), max_dist, min_dist)
+    ]
+    return [m for m in matches if _previous_are_far_enough(m, previous, min_dist // 2)]
+
+
+def _previous_are_far_enough(
+    question: Question, previous: List[Question], min_dist: int
+) -> bool:
+    for prev in previous:
+        if not distance_util.is_at_least(
+            question.coordinate(), prev.coordinate(), min_dist
+        ):
+            return False
+    return True
+
+
+def _assert_engough_questions(questions: List[Question], expected: int) -> None:
+    if len(questions) < expected:
+        raise InternalServerError("Not enough questions")
 
 
 def _filter_questions(questions: List[Question], exclude: Question) -> List[Question]:
