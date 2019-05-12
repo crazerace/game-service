@@ -16,7 +16,9 @@ class Position(db.Model):  # type: ignore
     )
     latitude: float = db.Column(db.Float, nullable=False)
     longitude: float = db.Column(db.Float, nullable=False)
-    created_at: datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_at: datetime = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow
+    )
 
     def __repr__(self) -> str:
         return (
@@ -31,6 +33,23 @@ class Position(db.Model):  # type: ignore
         return CoordinateDTO(latitude=self.latitude, longitude=self.longitude)
 
 
+class GameMemberQuestion(db.Model):  # type: ignore
+    id: int = db.Column(db.Integer, primary_key=True)
+    member_id: str = db.Column(
+        db.String(50), db.ForeignKey("game_member.id"), nullable=False
+    )
+    game_question_id: int = db.Column(
+        db.Integer, db.ForeignKey("game_question.id"), nullable=False
+    )
+    answer_position_id: str = db.Column(
+        db.String(50), db.ForeignKey("game_member_position.id"), nullable=False
+    )
+    answered_at: Optional[datetime] = db.Column(db.DateTime, nullable=True)
+    created_at: datetime = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow
+    )
+
+
 class GameMember(db.Model):  # type: ignore
     __table_args__ = (
         db.UniqueConstraint("game_id", "user_id", name="unique_game_id_user_id"),
@@ -40,9 +59,14 @@ class GameMember(db.Model):  # type: ignore
     user_id: str = db.Column(db.String(50), nullable=False)
     is_admin: bool = db.Column(db.Boolean, nullable=False, default=False)
     is_ready: bool = db.Column(db.Boolean, nullable=False, default=False)
-    created_at: datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_at: datetime = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow
+    )
     positions: List[Position] = db.relationship(
         "Position", backref="game_member", lazy=True
+    )
+    questions: List[GameMemberQuestion] = db.relationship(
+        "GameMemberQuestion", backref="game_member", lazy=True
     )
 
     def __repr__(self) -> str:
@@ -63,7 +87,9 @@ class Question(db.Model):  # type: ignore
     text_en: str = db.Column(db.Text, nullable=False)
     answer: str = db.Column(db.Text, nullable=False)
     answer_en: str = db.Column(db.Text, nullable=False)
-    created_at: datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_at: datetime = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow
+    )
 
     def __repr__(self) -> str:
         return (
@@ -100,7 +126,9 @@ class Game(db.Model):  # type: ignore
     third: str = db.Column(db.String(50), nullable=True)
     started_at: Optional[datetime] = db.Column(db.DateTime, nullable=True)
     ended_at: Optional[datetime] = db.Column(db.DateTime, nullable=True)
-    created_at: datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_at: datetime = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow
+    )
     questions: List[GameQuestion] = db.relationship(
         "GameQuestion", backref="game", lazy=True
     )
@@ -120,12 +148,16 @@ class Game(db.Model):  # type: ignore
 
 
 class TranslatedText(db.Model):  # type: ignore
-    __table_args__ = (db.UniqueConstraint("key", "language", name="unique_key_language"),)
+    __table_args__ = (
+        db.UniqueConstraint("key", "language", name="unique_key_language"),
+    )
     id: int = db.Column(db.Integer, primary_key=True)
     key: str = db.Column(db.String(50), nullable=False)
     language: str = db.Column(db.String(100), nullable=False)
     text: str = db.Column(db.Text, nullable=False)
-    created_at: datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_at: datetime = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow
+    )
 
     def __repr__(self) -> str:
         return (
