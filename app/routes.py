@@ -25,10 +25,10 @@ def add_game_member(game_id: str) -> flask.Response:
     return controller.add_game_member(game_id)
 
 
-# Get all state info about a game
 @app.route("/v1/games/<game_id>", methods=["GET"])
+@secured(JWT_SECRET)
 def get_game(game_id: str) -> flask.Response:
-    return http.create_ok_response()
+    return controller.get_game(game_id)
 
 
 @app.route("/v1/games/<game_id>/members/<member_id>/ready", methods=["PUT"])
@@ -37,11 +37,22 @@ def set_user_ready(game_id: str, member_id: str) -> flask.Response:
     return controller.set_game_member_as_ready(game_id, member_id)
 
 
-# Game master deletes game (only allowed before game is started, i.e. in the game lobby)
 @app.route("/v1/games/<game_id>", methods=["DELETE"])
 @secured(JWT_SECRET)
 def delete_game(game_id: str) -> flask.Response:
     return controller.delete_game(game_id)
+
+
+# Game master starts a game
+@app.route("/v1/games/<game_id>/start", methods=["PUT"])
+def start_game(game_id: str) -> flask.Response:
+    return http.create_ok_response()
+
+
+# Game master ends game
+@app.route("/v1/games/<game_id>/ended", methods=["PUT"])
+def end_game(game_id: str) -> flask.Response:
+    return http.create_ok_response()
 
 
 # Get members next question id

@@ -73,3 +73,9 @@ def delete_game(game_id: str) -> flask.Response:
     user_id: str = request.user_id
     game_service.delete_game(game_id, user_id)
     return http.create_ok_response()
+
+
+@trace("controller")
+def get_game(game_id: str) -> flask.Response:
+    game = game_service.get_game(game_id)
+    return http.create_response(game.todict())
