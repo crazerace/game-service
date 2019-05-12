@@ -1,14 +1,15 @@
 # Standard libraries
 import logging
-from typing import Optional
+from datetime import datetime
+from typing import List, Optional
 
 # 3rd party libraries
-from crazerace.http.error import ConflictError
+from crazerace.http.error import ConflictError, InternalServerError
 from crazerace.http.instrumentation import trace
 
 # Internal modules
 from app import db
-from app.models import Game
+from app.models import Game, GameQuestion
 from .util import handle_error
 
 
@@ -19,6 +20,21 @@ _log = logging.getLogger(__name__)
 @handle_error(logger=_log, integrity_error_class=ConflictError)
 def save(game: Game) -> None:
     db.session.add(game)
+    db.session.commit()
+
+
+@trace("game_repo")
+@handle_error(logger=_log, integrity_error_class=ConflictError)
+def save_questions(questions: List[GameQuestion]) -> None:
+    for question in questions:
+        db.session.add(question)
+    db.session.commit()
+
+
+@trace("game_repo")
+@handle_error(logger=_log, integrity_error_class=InternalServerError)
+def set_started(game: Game) -> None:
+    game.started_at = datetime.utcnow()
     db.session.commit()
 
 

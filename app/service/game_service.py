@@ -3,14 +3,19 @@ from typing import List
 from uuid import uuid4
 
 # 3rd party modules
-from crazerace.http.error import PreconditionRequiredError, ForbiddenError, NotFoundError
+from crazerace.http.error import (
+    PreconditionRequiredError,
+    ForbiddenError,
+    NotFoundError,
+    ConflictError,
+)
 from crazerace.http.instrumentation import trace
 
 # Internal modules
-from app.models import Game, GameMember
-from app.models.dto import CreateGameDTO, GameDTO, GameMemberDTO
+from app.models import Game, GameMember, GameQuestion, Question
+from app.models.dto import CreateGameDTO, GameDTO, GameMemberDTO, CoordinateDTO
 from app.repository import game_repo, member_repo
-from app.service import util
+from app.service import util, question_service
 
 
 @trace("game_service")
@@ -53,6 +58,15 @@ def get_game(id: str) -> GameDTO:
 
 
 @trace("game_service")
+def start_game(game_id: str, user_id: str, coordinate: CoordinateDTO) -> None:
+    game = _find_game_and_assert_can_be_started(game_id, user_id)
+    questions = question_service.find_questions_for_game(game, coordinate)
+    game_questions = _map_questions_to_game(game.id, questions)
+    game_repo.save_questions(game_questions)
+    game_repo.set_started(game)
+
+
+@trace("game_service")
 def add_game_member(game_id: str, user_id: str) -> None:
     _assert_game_exists(game_id)
     member = GameMember(id=util.new_id(), game_id=game_id, user_id=user_id)
@@ -83,6 +97,24 @@ def assert_valid_game_member(game_id: str, member_id: str, user_id: str) -> None
         raise ForbiddenError("Cannot set another user as ready")
 
 
+@trace("game_service")
+def _find_game_and_assert_can_be_started(game_id: str, user_id: str) -> Game:
+    game = _assert_game_exists(game_id)
+    _assert_user_is_game_admin(user_id, game)
+    _assert_all_members_ready(game)
+    if game.started_at is not None:
+        raise ConflictError(f"Game with id={game_id} is already started")
+    return game
+
+
+def _assert_all_members_ready(game: Game) -> None:
+    members_ready = [member.is_ready for member in game.members]
+    if not all(members_ready):
+        raise PreconditionRequiredError(
+            f"All members are not ready in game with id={game.id}"
+        )
+
+
 def _assert_user_is_game_admin(user_id: str, game: Game) -> None:
     for member in game.members:
         if member.user_id == user_id and member.is_admin:
@@ -90,7 +122,7 @@ def _assert_user_is_game_admin(user_id: str, game: Game) -> None:
     raise ForbiddenError(f"User is not admin on game with id={game.id}")
 
 
-def _assert_game_not_started(game) -> None:
+def _assert_game_not_started(game: Game) -> None:
     if game.started_at:
         raise PreconditionRequiredError(f"Game is started")
 
@@ -111,3 +143,7 @@ def _map_members_to_dto(members: List[GameMember]) -> List[GameMemberDTO]:
         )
         for m in members
     ]
+
+
+def _map_questions_to_game(game_id: str, questions: List[Question]) -> List[GameQuestion]:
+    return [GameQuestion(game_id=game_id, question_id=q.id) for q in questions]

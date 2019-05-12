@@ -95,7 +95,9 @@ class CreateGameDTO:
         name = raw["name"]
         if not (isinstance(name, str)):
             raise BadRequestError("Incorrect field types")
-        return cls(game_id=raw.get("id") or _new_id(), name=name, created_at=datetime.utcnow())
+        return cls(
+            game_id=raw.get("id") or _new_id(), name=name, created_at=datetime.utcnow()
+        )
 
 
 @dataclass
@@ -146,6 +148,12 @@ class GameDTO:
             "endedAt": f"{self.ended_at}" if self.ended_at else None,
             "members": [m.todict() for m in self.members],
         }
+
+
+@dataclass
+class CoordinateDTO:
+    latitude: float
+    longitude: float
 
 
 def _new_id() -> str:

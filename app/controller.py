@@ -1,21 +1,24 @@
 # Standard library
+import logging
 from typing import Any, Dict, Optional
 
 # 3rd party modules
 import flask
 from flask import jsonify, make_response, request
 from crazerace import http
-from crazerace.http import status, get_request_body
+from crazerace.http import status, get_request_body, get_param
 from crazerace.http.error import BadRequestError
 from crazerace.http.instrumentation import trace
 
 # Internal modules
 from app.service import health
 from app.service import health, game_service
-from app.models.dto import QuestionDTO, CreateGameDTO
+from app.models.dto import QuestionDTO, CreateGameDTO, CoordinateDTO
 from app.service import game_service
 from app.service import question_service
-from app.models.dto import QuestionDTO
+
+
+_log = logging.getLogger(__name__)
 
 
 @trace("controller")
@@ -79,3 +82,22 @@ def delete_game(game_id: str) -> flask.Response:
 def get_game(game_id: str) -> flask.Response:
     game = game_service.get_game(game_id)
     return http.create_response(game.todict())
+
+
+@trace("controller")
+def start_game(game_id: str) -> flask.Response:
+    user_id: str = request.user_id
+    coordinate = _get_coordinate_from_query()
+    game_service.start_game(game_id, user_id, coordinate)
+    return http.create_ok_response()
+
+
+def _get_coordinate_from_query() -> CoordinateDTO:
+    try:
+        return CoordinateDTO(
+            latitude=float(get_param("lat")), longitude=float(get_param("long"))
+        )
+    except ValueError as e:
+        _log.info(f"Error parsing position: {e}")
+        raise BadRequestError("Malformed position query")
+
