@@ -95,7 +95,9 @@ class CreateGameDTO:
         name = raw["name"]
         if not (isinstance(name, str)):
             raise BadRequestError("Incorrect field types")
-        return cls(game_id=raw.get("id") or _new_id(), name=name, created_at=datetime.utcnow())
+        return cls(
+            game_id=raw.get("id") or _new_id(), name=name, created_at=datetime.utcnow()
+        )
 
 
 @dataclass

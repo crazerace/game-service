@@ -31,11 +31,11 @@ def find_all(except_ids: List[str] = []) -> List[Question]:
 
 @trace("question_repo")
 def find_previous_question_ids(game: Game) -> List[str]:
-    member_ids = [m.id for m in game.members]
+    user_ids = [m.user_id for m in game.members]
     res = (
         db.session.query(GameQuestion, GameMember)
         .filter(GameQuestion.game_id == GameMember.game_id)
-        .filter(GameMember.id.notin_(member_ids))  # type: ignore
+        .filter(GameMember.user_id.in_(user_ids))  # type: ignore
         .all()
     )
     return list({game_question.question_id for game_question, _ in res})
