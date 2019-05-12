@@ -92,6 +92,13 @@ def start_game(game_id: str) -> flask.Response:
     return http.create_ok_response()
 
 
+@trace("controller")
+def leave_game(game_id: str, member_id: str) -> flask.Response:
+    user_id = request.user_id
+    game_service.leave_game(game_id, member_id, user_id)
+    return http.create_ok_response()
+
+
 def _get_coordinate_from_query() -> CoordinateDTO:
     try:
         return CoordinateDTO(

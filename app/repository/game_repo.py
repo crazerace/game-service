@@ -9,7 +9,7 @@ from crazerace.http.instrumentation import trace
 
 # Internal modules
 from app import db
-from app.models import Game, GameQuestion
+from app.models import Game, GameQuestion, GameMember
 from .util import handle_error
 
 

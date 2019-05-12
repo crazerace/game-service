@@ -49,10 +49,10 @@ def start_game(game_id: str) -> flask.Response:
     return controller.start_game(game_id)
 
 
-# Game master ends game
-@app.route("/v1/games/<game_id>/ended", methods=["PUT"])
-def end_game(game_id: str) -> flask.Response:
-    return http.create_ok_response()
+@app.route("/v1/games/<game_id>/members/<member_id>/leave", methods=["PUT"])
+@secured(JWT_SECRET)
+def leave_game(game_id: str, member_id: str) -> flask.Response:
+    return controller.leave_game(game_id, member_id)
 
 
 # Get members next question id
