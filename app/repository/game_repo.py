@@ -41,3 +41,11 @@ def set_started(game: Game) -> None:
 @trace("game_repo")
 def find(id: str) -> Optional[Game]:
     return Game.query.filter(Game.id == id).first()
+
+
+@trace("game_repo")
+def delete(game: Game) -> None:
+    for member in game.members:
+        db.session.delete(member)
+    db.session.delete(game)
+    db.session.commit()

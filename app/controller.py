@@ -45,7 +45,9 @@ def set_game_member_as_ready(game_id: str, member_id: str) -> flask.Response:
 
 @trace("controller")
 def add_question() -> flask.Response:
-    body = get_request_body("latitude", "longitude", "text", "text_en", "answer", "answer_en")
+    body = get_request_body(
+        "latitude", "longitude", "text", "text_en", "answer", "answer_en"
+    )
     question = QuestionDTO.fromdict(body)
     question_service.add_question(question)
     return http.create_ok_response()
@@ -54,7 +56,11 @@ def add_question() -> flask.Response:
 @trace("controller")
 def get_question(question_id: str) -> flask.Response:
     question = question_service.get_question(question_id)
-    body = question.todict() if request.role == "ADMIN" else question.only_question().todict()
+    body = (
+        question.todict()
+        if request.role == "ADMIN"
+        else question.only_question().todict()
+    )
     return http.create_response(body)
 
 
@@ -64,6 +70,13 @@ def create_game() -> flask.Response:
     body = get_request_body("name")
     game = CreateGameDTO.fromdict(body)
     game_service.create_game(game, user_id)
+    return http.create_ok_response()
+
+
+@trace("controller")
+def delete_game(game_id: str) -> flask.Response:
+    user_id: str = request.user_id
+    game_service.delete_game(game_id, user_id)
     return http.create_ok_response()
 
 
