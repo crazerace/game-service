@@ -28,7 +28,8 @@ def find(id: str) -> Optional[Game]:
 
 
 @trace("game_repo")
-def delete(id: str) -> None:
-    game = find(id)
+def delete(game: Game) -> None:
+    for member in game.members:
+        db.session.delete(member)
     db.session.delete(game)
     db.session.commit()
