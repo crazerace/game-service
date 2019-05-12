@@ -61,7 +61,7 @@ def _select_questions(
     question = _select_question(questions, origin)
     return (
         [question]
-        if no_questions == 1
+        if no_questions <= 1
         else [question]
         + _select_questions(
             _filter_questions(questions, question),
