@@ -13,11 +13,9 @@ from crazerace.http.instrumentation import trace
 # Internal modules
 from app.service import health
 from app.service import health, game_service
-from app.models import Coordinate
-from app.models.dto import QuestionDTO, CreateGameDTO
+from app.models.dto import QuestionDTO, CreateGameDTO, CoordinateDTO
 from app.service import game_service
 from app.service import question_service
-from app.models.dto import QuestionDTO
 
 
 _log = logging.getLogger(__name__)
@@ -94,9 +92,11 @@ def start_game(game_id: str) -> flask.Response:
     return http.create_ok_response()
 
 
-def _get_coordinate_from_query() -> Coordinate:
+def _get_coordinate_from_query() -> CoordinateDTO:
     try:
-        return Coordinate(latitude=float(get_param("lat")), longitude=float(get_param("long")))
+        return CoordinateDTO(
+            latitude=float(get_param("lat")), longitude=float(get_param("long"))
+        )
     except ValueError as e:
         _log.info(f"Error parsing position: {e}")
         raise BadRequestError("Malformed position query")

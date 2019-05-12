@@ -150,5 +150,11 @@ class GameDTO:
         }
 
 
+@dataclass
+class CoordinateDTO:
+    latitude: float
+    longitude: float
+
+
 def _new_id() -> str:
     return str(uuid4()).lower()

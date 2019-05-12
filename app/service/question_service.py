@@ -8,8 +8,8 @@ from crazerace.http.instrumentation import trace
 
 # Internal modules
 from app.config import DEFAULT_NO_QUESTIONS, DEFAULT_MIN_DISTANCE, DEFAULT_MAX_DISTANCE
-from app.models import Question, Game, GameMember, Coordinate
-from app.models.dto import QuestionDTO
+from app.models import Question, Game, GameMember
+from app.models.dto import QuestionDTO, CoordinateDTO
 from app.repository import question_repo
 from app.service import util, distance_util
 
@@ -47,14 +47,14 @@ def get_question(question_id: str) -> QuestionDTO:
 
 
 @trace("question_service")
-def find_questions(game: Game, coordinate: Coordinate) -> List[Question]:
+def find_questions(game: Game, coordinate: CoordinateDTO) -> List[Question]:
     prev_ids = question_repo.find_previous_question_ids(game)
     available_questions = question_repo.find_all(except_ids=prev_ids)
     return _select_questions(available_questions, coordinate, DEFAULT_NO_QUESTIONS)
 
 
 def _select_questions(
-    questions: List[Question], origin: Coordinate, no_questions: int
+    questions: List[Question], origin: CoordinateDTO, no_questions: int
 ) -> List[Question]:
     if len(questions) < no_questions:
         raise InternalServerError("Not enough questions")
@@ -71,7 +71,7 @@ def _select_questions(
     )
 
 
-def _select_question(questions: List[Question], origin: Coordinate) -> Question:
+def _select_question(questions: List[Question], origin: CoordinateDTO) -> Question:
     matching_questions = [
         q
         for q in questions

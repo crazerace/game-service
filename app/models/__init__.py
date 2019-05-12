@@ -5,12 +5,7 @@ from typing import List, Optional
 
 # Internal modules
 from app import db
-
-
-@dataclass
-class Coordinate:
-    latitude: float
-    longitude: float
+from .dto import CoordinateDTO
 
 
 class Position(db.Model):  # type: ignore
@@ -32,8 +27,8 @@ class Position(db.Model):  # type: ignore
             f"created_at={self.created_at})"
         )
 
-    def coordinate(self) -> Coordinate:
-        return Coordinate(latitude=self.latitude, longitude=self.longitude)
+    def coordinate(self) -> CoordinateDTO:
+        return CoordinateDTO(latitude=self.latitude, longitude=self.longitude)
 
 
 class GameMember(db.Model):  # type: ignore
@@ -82,8 +77,8 @@ class Question(db.Model):  # type: ignore
             f"created_at={self.created_at})"
         )
 
-    def coordinate(self) -> Coordinate:
-        return Coordinate(latitude=self.latitude, longitude=self.longitude)
+    def coordinate(self) -> CoordinateDTO:
+        return CoordinateDTO(latitude=self.latitude, longitude=self.longitude)
 
 
 class GameQuestion(db.Model):  # type: ignore

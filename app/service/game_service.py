@@ -12,8 +12,8 @@ from crazerace.http.error import (
 from crazerace.http.instrumentation import trace
 
 # Internal modules
-from app.models import Game, GameMember, Coordinate, GameQuestion, Question
-from app.models.dto import CreateGameDTO, GameDTO, GameMemberDTO
+from app.models import Game, GameMember, GameQuestion, Question
+from app.models.dto import CreateGameDTO, GameDTO, GameMemberDTO, CoordinateDTO
 from app.repository import game_repo, member_repo
 from app.service import util, question_service
 
@@ -58,7 +58,7 @@ def get_game(id: str) -> GameDTO:
 
 
 @trace("game_service")
-def start_game(game_id: str, user_id: str, coordinate: Coordinate) -> None:
+def start_game(game_id: str, user_id: str, coordinate: CoordinateDTO) -> None:
     game = _find_game_and_assert_can_be_started(game_id, user_id)
     questions = question_service.find_questions(game, coordinate)
     game_questions = _map_questions_to_game(game.id, questions)
@@ -99,9 +99,7 @@ def assert_valid_game_member(game_id: str, member_id: str, user_id: str) -> None
 
 @trace("game_service")
 def _find_game_and_assert_can_be_started(game_id: str, user_id: str) -> Game:
-    game = game_repo.find(game_id)
-    if not game:
-        raise PreconditionRequiredError(f"Game with id={game_id} does not exit")
+    game = _assert_game_exists(game_id)
     _assert_user_is_game_admin(user_id, game)
     _assert_all_members_ready(game)
     if game.started_at is not None:
@@ -124,7 +122,7 @@ def _assert_user_is_game_admin(user_id: str, game: Game) -> None:
     raise ForbiddenError(f"User is not admin on game with id={game.id}")
 
 
-def _assert_game_not_started(game) -> None:
+def _assert_game_not_started(game: Game) -> None:
     if game.started_at:
         raise PreconditionRequiredError(f"Game is started")
 
