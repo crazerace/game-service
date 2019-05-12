@@ -56,7 +56,7 @@ def end_game(game_id: str) -> flask.Response:
 
 
 # Get members next question id
-@app.route("/v1/games/<game_id>/members/<member_id>/question", methods=["GET"])
+@app.route("/v1/games/<game_id>/members/<member_id>/next-question", methods=["GET"])
 def get_current_question(game_id: str, member_id: str) -> flask.Response:
     return http.create_ok_response()
 

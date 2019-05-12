@@ -1,5 +1,6 @@
 # Standard library
 import json
+from datetime import datetime
 
 # 3rd party modules
 from crazerace.http import status
@@ -7,7 +8,14 @@ from crazerace.http import status
 # Intenal modules
 from tests import TestEnvironment, JSON, headers, new_id
 from app.repository import question_repo
-from app.models import Question
+from app.models import (
+    Question,
+    Game,
+    GameMember,
+    Position,
+    GameMemberQuestion,
+    GameQuestion,
+)
 
 
 def test_add_question():
@@ -128,4 +136,96 @@ def test_get_question():
 
         not_found_res = client.get(f"/v1/questions/{new_id()}", headers=headers_ok)
         assert not_found_res.status_code == status.HTTP_404_NOT_FOUND
+
+
+def test_get_members_next_question():
+    game_id = new_id()
+    member_id = new_id()
+    other_member_id = new_id()
+
+    q1_id = new_id()
+    q1 = Question(
+        id=q1_id,
+        latitude=59.318134,
+        longitude=18.063666,
+        text="t1",
+        text_en="t1-en",
+        answer="a1",
+        answer_en="a1-en",
+    )
+    q2_id = new_id()
+    q2 = Question(
+        id=q2_id,
+        latitude=59.316556,
+        longitude=18.033478,
+        text="t2",
+        text_en="t2-en",
+        answer="a2",
+        answer_en="a2-en",
+    )
+    q3_id = new_id()
+    q3 = Question(
+        id=q3_id,
+        latitude=59.316709,
+        longitude=17.984827,
+        text="t3",
+        text_en="t3-en",
+        answer="a3",
+        answer_en="a3-en",
+    )
+
+    game = Game(
+        id=game_id,
+        name="Test game",
+        created_at=datetime.utcnow(),
+        started_at=datetime.utcnow(),
+        members=[
+            GameMember(
+                id=member_id,
+                game_id=game_id,
+                user_id=new_id(),
+                is_admin=False,
+                is_ready=True,
+                created_at=datetime.utcnow(),
+            ),
+            GameMember(
+                id=other_member_id,
+                game_id=game_id,
+                user_id=new_id(),
+                is_admin=False,
+                is_ready=True,
+                created_at=datetime.utcnow(),
+            ),
+        ],
+        questions=[
+            GameQuestion(id=1, game_id=game_id, question_id=q1_id),
+            GameQuestion(id=2, game_id=game_id, question_id=q2_id),
+            GameQuestion(id=3, game_id=game_id, question_id=q3_id),
+        ],
+    )
+
+    pos_id = new_id()
+    pos = Position(
+        id=pos_id,
+        game_member_id=other_member_id,
+        latitude=59.318133,
+        longitude=18.063667,
+        created_at=datetime.utcnow(),
+    )
+
+    answered_question = GameMemberQuestion(
+        member_id=other_member_id,
+        game_question_id=1,
+        answer_position_id=pos_id,
+        answered_at=datetime.utcnow(),
+        created_at=datetime.utcnow(),
+    )
+
+    db_items = [q1, q2, game, pos, answered_question]
+    with TestEnvironment(db_items) as client:
+        headers_ok = headers(new_id())
+        res = client.get(
+            f"/v1/games/{game_id}/members/{member_id}/next-question", headers=headers_ok
+        )
+        assert res.status_code == status.HTTP_200_OK
 
