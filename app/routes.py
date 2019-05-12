@@ -37,6 +37,12 @@ def set_user_ready(game_id: str, member_id: str) -> flask.Response:
     return controller.set_game_member_as_ready(game_id, member_id)
 
 
+@app.route("/v1/games/<game_id>", methods=["DELETE"])
+@secured(JWT_SECRET)
+def delete_game(game_id: str) -> flask.Response:
+    return controller.delete_game(game_id)
+
+
 # Game master starts a game
 @app.route("/v1/games/<game_id>/start", methods=["PUT"])
 def start_game(game_id: str) -> flask.Response:

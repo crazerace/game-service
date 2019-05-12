@@ -20,10 +20,20 @@ def create_game(new_game: CreateGameDTO, user_id: str) -> None:
         name=new_game.name,
         created_at=new_game.created_at,
         members=[
-            GameMember(id=_new_id(), user_id=user_id, game_id=new_game.game_id, is_admin=True)
+            GameMember(
+                id=_new_id(), user_id=user_id, game_id=new_game.game_id, is_admin=True
+            )
         ],
     )
     game_repo.save(game)
+
+
+@trace("game_service")
+def delete_game(game_id: str, user_id: str) -> None:
+    game = _assert_game_exists(game_id)
+    _assert_user_is_game_admin(user_id, game)
+    _assert_game_not_started(game)
+    game_repo.delete(game)
 
 
 @trace("game_service")
@@ -44,7 +54,7 @@ def get_game(id: str) -> GameDTO:
 
 @trace("game_service")
 def add_game_member(game_id: str, user_id: str) -> None:
-    assert_game_exists(game_id)
+    _assert_game_exists(game_id)
     member = GameMember(id=util.new_id(), game_id=game_id, user_id=user_id)
     member_repo.add_member(member)
 
@@ -56,19 +66,33 @@ def set_game_member_as_ready(game_id: str, member_id: str, user_id: str) -> None
 
 
 @trace("game_service")
-def assert_game_exists(game_id: str) -> None:
-    if not game_repo.find(game_id):
+def _assert_game_exists(game_id: str) -> None:
+    game = game_repo.find(game_id)
+    if not game:
         raise PreconditionRequiredError(f"Game with id={game_id} does not exit")
+    return game
 
 
 @trace("game_service")
 def assert_valid_game_member(game_id: str, member_id: str, user_id: str) -> None:
-    assert_game_exists(game_id)
+    _assert_game_exists(game_id)
     member = member_repo.find(member_id)
     if not member:
         raise PreconditionRequiredError(f"Game member with id={member_id} does not exit")
     if member.user_id != user_id:
         raise ForbiddenError("Cannot set another user as ready")
+
+
+def _assert_user_is_game_admin(user_id: str, game: Game) -> None:
+    for member in game.members:
+        if member.user_id == user_id and member.is_admin:
+            return
+    raise ForbiddenError(f"User is not admin on game with id={game.id}")
+
+
+def _assert_game_not_started(game) -> None:
+    if game.started_at:
+        raise PreconditionRequiredError(f"Game is started")
 
 
 def _new_id() -> str:
