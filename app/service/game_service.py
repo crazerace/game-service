@@ -60,7 +60,7 @@ def get_game(id: str) -> GameDTO:
 @trace("game_service")
 def start_game(game_id: str, user_id: str, coordinate: CoordinateDTO) -> None:
     game = _find_game_and_assert_can_be_started(game_id, user_id)
-    questions = question_service.find_questions(game, coordinate)
+    questions = question_service.find_questions_for_game(game, coordinate)
     game_questions = _map_questions_to_game(game.id, questions)
     game_repo.save_questions(game_questions)
     game_repo.set_started(game)

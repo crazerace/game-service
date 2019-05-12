@@ -47,7 +47,7 @@ def get_question(question_id: str) -> QuestionDTO:
 
 
 @trace("question_service")
-def find_questions(game: Game, coordinate: CoordinateDTO) -> List[Question]:
+def find_questions_for_game(game: Game, coordinate: CoordinateDTO) -> List[Question]:
     prev_ids = question_repo.find_previous_question_ids(game)
     available_questions = question_repo.find_all(except_ids=prev_ids)
     return _select_questions(available_questions, coordinate, DEFAULT_NO_QUESTIONS)
