@@ -37,3 +37,13 @@ def test_is_within():
     assert not distance_util.is_within(origin, out_of_range, max_dist=3000)
     assert distance_util.is_within(origin, out_of_range, max_dist=3700, min_dist=1000)
 
+
+def test_is_at_least():
+    origin = CoordinateDTO(latitude=59.318329, longitude=18.042192)
+    destination = CoordinateDTO(
+        latitude=59.316556, longitude=18.033478
+    )  # 532 meters from origin
+
+    assert distance_util.is_at_least(origin, destination, min_dist=500)
+    assert not distance_util.is_at_least(origin, destination, min_dist=600)
+

@@ -20,6 +20,18 @@ def is_within(
     return min_dist <= dist and dist <= max_dist
 
 
+def is_at_least(origin: CoordinateDTO, destination: CoordinateDTO, min_dist: int) -> bool:
+    """Checks if two positions are at least a specified distance appart.
+
+    :param origin: CoordinateDTO to calculate distance from.
+    :param destination: CoordinateDTO to calculate distance to.
+    :param min_dist: Minimum distance in meters.
+    :return: Boolean.
+    """
+    dist = calculate(origin, destination)
+    return min_dist < dist
+
+
 def calculate(origin: CoordinateDTO, destination: CoordinateDTO) -> int:
     """Calculates the distance in meters between two positions.
 
