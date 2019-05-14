@@ -92,3 +92,58 @@ def test_leave_game():
             headers=headers(other_member_id),
         )
         assert res_bad.status_code == status.HTTP_403_FORBIDDEN
+
+
+def test_all_players_resign_game():
+    game_id = new_id()
+    game1_member_id = new_id()
+    game2_member_id = new_id()
+    user1_id = new_id()
+    user2_id = new_id()
+
+    game1_member = GameMember(
+        id=game1_member_id,
+        game_id=game_id,
+        user_id=user1_id,
+        is_admin=False,
+        is_ready=False,
+        created_at=datetime.utcnow(),
+    )
+
+    game2_member = GameMember(
+        id=game2_member_id,
+        game_id=game_id,
+        user_id=user2_id,
+        is_admin=False,
+        is_ready=True,
+        created_at=datetime.utcnow(),
+    )
+
+    game = Game(
+        id=game_id,
+        name="Game Started",
+        started_at=datetime.utcnow(),
+        members=[game2_member],
+    )
+
+    with TestEnvironment([game1_member, game2_member, game]) as client:
+
+        # Player 1 of 2 resigns, game should not end
+        res_member1_resigns = client.put(
+            f"/v1/games/{game_id}/members/{game1_member_id}/leave",
+            headers=headers(user1_id),
+        )
+        assert res_member1_resigns.status_code == status.HTTP_200_OK
+
+        game = game_repo.find(game_id)
+        assert game.ended_at == None
+
+        # Player 2 of 2 resigns, game should end
+        res_member2_resigns = client.put(
+            f"/v1/games/{game_id}/members/{game2_member_id}/leave",
+            headers=headers(user2_id),
+        )
+        assert res_member2_resigns.status_code == status.HTTP_200_OK
+
+        game = game_repo.find(game_id)
+        assert game.ended_at != None

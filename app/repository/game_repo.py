@@ -49,3 +49,9 @@ def delete(game: Game) -> None:
         db.session.delete(member)
     db.session.delete(game)
     db.session.commit()
+
+
+@trace("game_repo")
+def end(game: Game) -> None:
+    game.ended_at = datetime.utcnow()
+    db.session.commit()

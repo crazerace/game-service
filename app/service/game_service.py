@@ -86,6 +86,7 @@ def leave_game(game_id: str, member_id: str, user_id: str) -> None:
         member_repo.delete_member(member)
     else:
         member_repo.set_member_status_as_resigned(member)
+    _check_if_game_ended(game)
 
 
 @trace("game_service")
@@ -161,3 +162,11 @@ def _map_questions_to_game(
     game_id: str, questions: List[Question]
 ) -> List[GameQuestion]:
     return [GameQuestion(game_id=game_id, question_id=q.id) for q in questions]
+
+
+def _check_if_game_ended(game: Game) -> None:
+    for member in game.members:
+        if member.resigned_at == None:
+            return
+    game_repo.end(game)
+
