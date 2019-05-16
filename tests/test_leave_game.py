@@ -98,8 +98,10 @@ def test_all_players_resign_game():
     game_id = new_id()
     game1_member_id = new_id()
     game2_member_id = new_id()
+    game_not_member_id = new_id()
     user1_id = new_id()
     user2_id = new_id()
+    user3_id = new_id()
 
     game1_member = GameMember(
         id=game1_member_id,
@@ -119,6 +121,15 @@ def test_all_players_resign_game():
         created_at=datetime.utcnow(),
     )
 
+    game_not_member = GameMember(
+        id=game_not_member_id,
+        game_id="InvalidGameID",
+        user_id=user3_id,
+        is_admin=False,
+        is_ready=True,
+        created_at=datetime.utcnow(),
+    )
+
     game = Game(
         id=game_id,
         name="Game Started",
@@ -126,7 +137,7 @@ def test_all_players_resign_game():
         members=[game2_member],
     )
 
-    with TestEnvironment([game1_member, game2_member, game]) as client:
+    with TestEnvironment([game1_member, game2_member, game_not_member, game]) as client:
 
         # Player 1 of 2 resigns, game should not end
         res_member1_resigns = client.put(
@@ -137,6 +148,15 @@ def test_all_players_resign_game():
 
         game = game_repo.find(game_id)
         assert game.ended_at == None
+
+        # Player not member in game resigns game
+        res__not_member_resigns = client.put(
+            f"/v1/games/{game_id}/members/{game_not_member_id}/leave",
+            headers=headers(user3_id),
+        )
+        assert (
+            res__not_member_resigns.status_code == status.HTTP_428_PRECONDITION_REQUIRED
+        )
 
         # Player 2 of 2 resigns, game should end
         res_member2_resigns = client.put(

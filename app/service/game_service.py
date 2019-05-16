@@ -81,7 +81,8 @@ def set_game_member_as_ready(game_id: str, member_id: str, user_id: str) -> None
 
 @trace("game_service")
 def leave_game(game_id: str, member_id: str, user_id: str) -> None:
-    game, member = _assert_valid_game_member(game_id, member_id, user_id)
+    game = _assert_game_exists(game_id)
+    member = _assert_valid_game_member(game_id, member_id, user_id)
     if game.started_at is None:
         member_repo.delete_member(member)
     else:
@@ -98,16 +99,17 @@ def _assert_game_exists(game_id: str) -> None:
 
 
 @trace("game_service")
-def _assert_valid_game_member(game_id: str, member_id: str, user_id: str) -> None:
-    game = _assert_game_exists(game_id)
+def _assert_valid_game_member(game_id: str, member_id: str, user_id: str) -> GameMember:
     member = member_repo.find(member_id)
     if not member:
         raise PreconditionRequiredError(
             f"Game member with id={member_id} does not exit"
         )
-    if member.user_id != user_id:
+    elif member.user_id != user_id:
         raise ForbiddenError("User ID and member ID is not related")
-    return game, member
+    elif member.game_id != game_id:
+        raise PreconditionRequiredError(f"Member not part of game with id={game_id}")
+    return member
 
 
 @trace("game_service")
