@@ -75,8 +75,19 @@ def add_game_member(game_id: str, user_id: str) -> None:
 
 @trace("game_service")
 def set_game_member_as_ready(game_id: str, member_id: str, user_id: str) -> None:
-    assert_valid_game_member(game_id, member_id, user_id)
+    _assert_valid_game_member(game_id, member_id, user_id)
     member_repo.set_as_ready(member_id)
+
+
+@trace("game_service")
+def leave_game(game_id: str, member_id: str, user_id: str) -> None:
+    game = _assert_game_exists(game_id)
+    member = _assert_valid_game_member(game_id, member_id, user_id)
+    if game.started_at is None:
+        member_repo.delete_member(member)
+    else:
+        member_repo.set_member_status_as_resigned(member)
+    _check_if_game_ended(game)
 
 
 @trace("game_service")
@@ -88,13 +99,17 @@ def _assert_game_exists(game_id: str) -> None:
 
 
 @trace("game_service")
-def assert_valid_game_member(game_id: str, member_id: str, user_id: str) -> None:
-    _assert_game_exists(game_id)
+def _assert_valid_game_member(game_id: str, member_id: str, user_id: str) -> GameMember:
     member = member_repo.find(member_id)
     if not member:
-        raise PreconditionRequiredError(f"Game member with id={member_id} does not exit")
-    if member.user_id != user_id:
-        raise ForbiddenError("Cannot set another user as ready")
+        raise PreconditionRequiredError(
+            f"Game member with id={member_id} does not exit"
+        )
+    elif member.user_id != user_id:
+        raise ForbiddenError("User ID and member ID is not related")
+    elif member.game_id != game_id:
+        raise PreconditionRequiredError(f"Member not part of game with id={game_id}")
+    return member
 
 
 @trace("game_service")
@@ -145,5 +160,15 @@ def _map_members_to_dto(members: List[GameMember]) -> List[GameMemberDTO]:
     ]
 
 
-def _map_questions_to_game(game_id: str, questions: List[Question]) -> List[GameQuestion]:
+def _map_questions_to_game(
+    game_id: str, questions: List[Question]
+) -> List[GameQuestion]:
     return [GameQuestion(game_id=game_id, question_id=q.id) for q in questions]
+
+
+def _check_if_game_ended(game: Game) -> None:
+    for member in game.members:
+        if member.resigned_at == None:
+            return
+    game_repo.end(game)
+
