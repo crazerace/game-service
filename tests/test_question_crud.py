@@ -225,7 +225,13 @@ def test_get_members_next_question():
     with TestEnvironment(db_items) as client:
         headers_ok = headers(new_id())
         res = client.get(
-            f"/v1/games/{game_id}/members/{member_id}/next-question", headers=headers_ok
+            f"/v1/games/{game_id}/members/{member_id}/next-question?lat=59.318132&long=18.063668",
+            headers=headers_ok,
         )
         assert res.status_code == status.HTTP_200_OK
+
+        res_no_position = client.get(
+            f"/v1/games/{game_id}/members/{member_id}/next-question", headers=headers_ok
+        )
+        assert res_no_position.status_code == status.HTTP_400_BAD_REQUEST
 

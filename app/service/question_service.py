@@ -11,7 +11,7 @@ from app.config import DEFAULT_NO_QUESTIONS, DEFAULT_MIN_DISTANCE, DEFAULT_MAX_D
 from app.models import Question, Game, GameMember
 from app.models.dto import QuestionDTO, CoordinateDTO
 from app.repository import question_repo
-from app.service import util, distance_util
+from app.service import util, distance_util, game_state_util
 
 
 @trace("question_service")
@@ -51,6 +51,15 @@ def find_questions_for_game(game: Game, coordinate: CoordinateDTO) -> List[Quest
     prev_ids = question_repo.find_previous_question_ids(game)
     available_questions = question_repo.find_all(except_ids=prev_ids)
     return _select_questions(available_questions, coordinate, DEFAULT_NO_QUESTIONS)
+
+
+@trace("question_service")
+def get_members_next_question(
+    game_id: str, member_id: str, user_id: str, current_position: CoordinateDTO
+) -> QuestionDTO:
+    game = game_state_util.assert_game_exists(game_id)
+    game_state_util.assert_valid_game_member(game_id, member_id, user_id)
+    return get_question(game_id)
 
 
 def _select_questions(
