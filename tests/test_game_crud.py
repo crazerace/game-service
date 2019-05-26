@@ -42,8 +42,6 @@ def test_create_game():
 def test_delete_game():
     game1_id = new_id()
     game2_id = new_id()
-    game_member_id = new_id()
-    game_admin_id = new_id()
     user1_id = new_id()
     user2_id = new_id()
 
@@ -96,8 +94,6 @@ def test_delete_game():
     ]
 
     with TestEnvironment(games) as client:
-        headers_member = headers(user1_id)
-        headers_admin = headers(user2_id)
 
         # Delete as regular game member (return 403)
         res_bad1 = client.delete(f"/v1/games/{game1_id}", headers=headers(user1_id))

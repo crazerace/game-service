@@ -9,7 +9,7 @@ from crazerace.http.instrumentation import trace
 
 # Internal modules
 from app import db
-from app.models import Game, GameQuestion
+from app.models import Game, GameQuestion, GameMember
 from .util import handle_error
 
 
@@ -48,4 +48,10 @@ def delete(game: Game) -> None:
     for member in game.members:
         db.session.delete(member)
     db.session.delete(game)
+    db.session.commit()
+
+
+@trace("game_repo")
+def end(game: Game) -> None:
+    game.ended_at = datetime.utcnow()
     db.session.commit()

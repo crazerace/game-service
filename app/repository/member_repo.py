@@ -1,6 +1,7 @@
 # Standard libraries
 import logging
 from typing import Optional
+from datetime import datetime
 
 # 3rd party libraries
 from crazerace.http.error import ConflictError, NotFoundError
@@ -35,4 +36,16 @@ def set_as_ready(id: str) -> None:
 @trace("member_repo")
 def find(id: str) -> Optional[GameMember]:
     return GameMember.query.filter(GameMember.id == id).first()
+
+
+@trace("game_repo")
+def delete_member(member: GameMember) -> None:
+    db.session.delete(member)
+    db.session.commit()
+
+
+@trace("game_repo")
+def set_member_status_as_resigned(member: GameMember) -> None:
+    member.resigned_at = datetime.utcnow()
+    db.session.commit()
 
