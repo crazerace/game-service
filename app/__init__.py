@@ -12,7 +12,7 @@ from flask import Flask, jsonify, make_response, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from crazerace.http import status, instrumentation
-from crazerace.http.error import RequestError, NotFoundError
+from crazerace.http.error import RequestError, NotFoundError, MethodNotAllowedError
 
 # Internal modules
 from app.config import AppConfig
@@ -74,4 +74,16 @@ def handle_not_found(err: werkzeug.exceptions.NotFound) -> flask.Response:
     :return: flask.Response indicating the encountered error.
     """
     error = NotFoundError()
+    return make_response(jsonify(error.asdict()), error.status())
+
+
+@app.errorhandler(405)
+def handle_method_not_allowed(
+    err: werkzeug.exceptions.MethodNotAllowed
+) -> flask.Response:
+    """Handles 405 errors.
+
+    :return: flask.Response indicating the encountered error.
+    """
+    error = MethodNotAllowedError()
     return make_response(jsonify(error.asdict()), error.status())
