@@ -21,4 +21,3 @@ LOGGING_CONIFG = {
 }
 
 logging.getLogger("werkzeug").setLevel(logging.ERROR)
-# logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
