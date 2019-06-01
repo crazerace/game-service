@@ -55,7 +55,6 @@ def leave_game(game_id: str, member_id: str) -> flask.Response:
     return controller.leave_game(game_id, member_id)
 
 
-# Get members next question id
 @app.route("/v1/games/<game_id>/members/<member_id>/next-question", methods=["GET"])
 @secured(JWT_SECRET)
 def get_current_question(game_id: str, member_id: str) -> flask.Response:
@@ -64,6 +63,7 @@ def get_current_question(game_id: str, member_id: str) -> flask.Response:
 
 # Update position
 @app.route("/v1/games/<game_id>/members/<member_id>/position", methods=["POST"])
+@secured(JWT_SECRET)
 def add_user_position(game_id: str, member_id: str) -> flask.Response:
     return http.create_ok_response()
 
