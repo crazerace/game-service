@@ -121,7 +121,7 @@ def _select_closest_question(
 def _filter_to_close_questions(
     questions: List[Question], coordinate: CoordinateDTO
 ) -> List[Question]:
-    min_dist = DEFAULT_MIN_DISTANCE // 2
+    min_dist = DEFAULT_MIN_DISTANCE // 4
     return [
         q
         for q in questions
