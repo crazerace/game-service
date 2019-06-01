@@ -146,6 +146,9 @@ def test_get_members_next_question():
     other_user_id = new_id()
     other_member_id = new_id()
 
+    user_3_id = new_id()
+    member_3_id = new_id()
+
     q1_id = new_id()
     q1 = Question(
         id=q1_id,
@@ -199,6 +202,14 @@ def test_get_members_next_question():
                 is_ready=True,
                 created_at=datetime.utcnow(),
             ),
+            GameMember(
+                id=member_3_id,
+                game_id=game_id,
+                user_id=user_3_id,
+                is_admin=False,
+                is_ready=True,
+                created_at=datetime.utcnow(),
+            ),
         ],
         questions=[
             GameQuestion(id=1, game_id=game_id, question_id=q1_id),
@@ -207,24 +218,65 @@ def test_get_members_next_question():
         ],
     )
 
-    pos_id = new_id()
-    pos = Position(
-        id=pos_id,
+    pos_1_id = new_id()
+    pos_1 = Position(
+        id=pos_1_id,
         game_member_id=other_member_id,
         latitude=59.318133,
         longitude=18.063667,
         created_at=datetime.utcnow(),
     )
+    pos_2_id = new_id()
+    pos_2 = Position(
+        id=pos_2_id,
+        game_member_id=member_3_id,
+        latitude=59.316556,
+        longitude=18.033478,
+        created_at=datetime.utcnow(),
+    )
+    pos_3_id = new_id()
+    pos_3 = Position(
+        id=pos_3_id,
+        game_member_id=member_3_id,
+        latitude=59.316709,
+        longitude=17.984827,
+        created_at=datetime.utcnow(),
+    )
 
-    answered_question = GameMemberQuestion(
+    answered_question_1 = GameMemberQuestion(
         member_id=other_member_id,
         game_question_id=1,
-        answer_position_id=pos_id,
+        answer_position_id=pos_1_id,
+        answered_at=datetime.utcnow(),
+        created_at=datetime.utcnow(),
+    )
+    answered_question_2 = GameMemberQuestion(
+        member_id=member_3_id,
+        game_question_id=2,
+        answer_position_id=pos_2_id,
+        answered_at=datetime.utcnow(),
+        created_at=datetime.utcnow(),
+    )
+    answered_question_3 = GameMemberQuestion(
+        member_id=member_3_id,
+        game_question_id=3,
+        answer_position_id=pos_3_id,
         answered_at=datetime.utcnow(),
         created_at=datetime.utcnow(),
     )
 
-    db_items = [q1, q2, q3, game, pos, answered_question]
+    db_items = [
+        q1,
+        q2,
+        q3,
+        game,
+        pos_1,
+        pos_2,
+        pos_3,
+        answered_question_1,
+        answered_question_2,
+        answered_question_3,
+    ]
     with TestEnvironment(db_items) as client:
         member_headers = headers(user_id)
         res_1 = client.get(
@@ -268,6 +320,17 @@ def test_get_members_next_question():
         other_body_2 = res_other_user_2.get_json()
         assert other_body_2["id"] == q2_id
         assert "answer" not in other_body_2
+
+        # Test with position to close to q1 but that being the only available question. Should return q1
+        res_member_3 = client.get(
+            f"/v1/games/{game_id}/members/{member_3_id}/next-question?lat=59.317&long=18.062",
+            headers=headers(user_3_id),
+            content_type=JSON,
+        )
+        assert res_member_3.status_code == status.HTTP_200_OK
+        member_3_body = res_member_3.get_json()
+        assert member_3_body["id"] == q1_id
+        assert "answer" not in member_3_body
 
         res_no_position = client.get(
             f"/v1/games/{game_id}/members/{member_id}/next-question",
