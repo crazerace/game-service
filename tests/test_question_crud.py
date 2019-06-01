@@ -140,7 +140,10 @@ def test_get_question():
 
 def test_get_members_next_question():
     game_id = new_id()
+    user_id = new_id()
     member_id = new_id()
+
+    other_user_id = new_id()
     other_member_id = new_id()
 
     q1_id = new_id()
@@ -183,7 +186,7 @@ def test_get_members_next_question():
             GameMember(
                 id=member_id,
                 game_id=game_id,
-                user_id=new_id(),
+                user_id=user_id,
                 is_admin=False,
                 is_ready=True,
                 created_at=datetime.utcnow(),
@@ -191,7 +194,7 @@ def test_get_members_next_question():
             GameMember(
                 id=other_member_id,
                 game_id=game_id,
-                user_id=new_id(),
+                user_id=other_user_id,
                 is_admin=False,
                 is_ready=True,
                 created_at=datetime.utcnow(),
@@ -221,17 +224,53 @@ def test_get_members_next_question():
         created_at=datetime.utcnow(),
     )
 
-    db_items = [q1, q2, game, pos, answered_question]
+    db_items = [q1, q2, q3, game, pos, answered_question]
     with TestEnvironment(db_items) as client:
-        headers_ok = headers(new_id())
-        res = client.get(
+        member_headers = headers(user_id)
+        res_1 = client.get(
             f"/v1/games/{game_id}/members/{member_id}/next-question?lat=59.318132&long=18.063668",
-            headers=headers_ok,
+            headers=member_headers,
+            content_type=JSON,
         )
-        assert res.status_code == status.HTTP_200_OK
+        assert res_1.status_code == status.HTTP_200_OK
+        body_1 = res_1.get_json()
+        assert body_1["id"] == q2_id
+        assert "answer" not in body_1
+
+        # Test with position closer to q1 but selected and unaswerd q2. Should return q2
+        res_2 = client.get(
+            f"/v1/games/{game_id}/members/{member_id}/next-question?lat=59.316&long=18.053",
+            headers=member_headers,
+            content_type=JSON,
+        )
+        assert res_2.status_code == status.HTTP_200_OK
+        body_2 = res_2.get_json()
+        assert body_2["id"] == q2_id
+        assert "answer" not in body_2
+
+        res_other_user_1 = client.get(
+            f"/v1/games/{game_id}/members/{other_member_id}/next-question?lat=59.316&long=18.053",
+            headers=headers(other_user_id),
+            content_type=JSON,
+        )
+        assert res_other_user_1.status_code == status.HTTP_200_OK
+        other_body_1 = res_other_user_1.get_json()
+        assert other_body_1["id"] == q2_id
+        assert "answer" not in other_body_1
+
+        # Test with position closer to q3 but selected and unaswerd q2. Should return q2
+        res_other_user_2 = client.get(
+            f"/v1/games/{game_id}/members/{other_member_id}/next-question?lat=59.316&long=18.0",
+            headers=headers(other_user_id),
+            content_type=JSON,
+        )
+        assert res_other_user_2.status_code == status.HTTP_200_OK
+        other_body_2 = res_other_user_2.get_json()
+        assert other_body_2["id"] == q2_id
+        assert "answer" not in other_body_2
 
         res_no_position = client.get(
-            f"/v1/games/{game_id}/members/{member_id}/next-question", headers=headers_ok
+            f"/v1/games/{game_id}/members/{member_id}/next-question",
+            headers=member_headers,
         )
         assert res_no_position.status_code == status.HTTP_400_BAD_REQUEST
-

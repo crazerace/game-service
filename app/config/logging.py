@@ -19,3 +19,6 @@ LOGGING_CONIFG = {
     },
     "root": {"handlers": ["console"], "level": logging.DEBUG},
 }
+
+logging.getLogger("werkzeug").setLevel(logging.ERROR)
+# logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)

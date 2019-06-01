@@ -101,8 +101,12 @@ def leave_game(game_id: str, member_id: str) -> flask.Response:
 
 @trace("controller")
 def get_members_next_question(game_id: str, member_id: str) -> flask.Response:
+    user_id: str = request.user_id
     coordinate = _get_coordinate_from_query()
-    return http.create_ok_response()
+    question = question_service.get_members_next_question(
+        game_id, member_id, user_id, coordinate
+    )
+    return http.create_response(question.only_question().todict())
 
 
 def _get_coordinate_from_query() -> CoordinateDTO:
