@@ -73,19 +73,12 @@ def find_members_possible_questions(game_id: str, member_id: str) -> List[Questi
 # The performance of this probably sucks, should be refactored
 @trace("question_repo")
 def find_members_active_question(game_id: str, member_id: str) -> Optional[Question]:
-    active_question = GameMemberQuestion.query.filter(
-        GameMemberQuestion.member_id == member_id,
-        GameMemberQuestion.answered_at.is_(None),  #  type: ignore
-    ).first()
-    if not active_question:
-        return None
-
     return (
-        db.session.query(Question)
-        .join(GameQuestion)
+        Question.query.join(GameQuestion)
+        .join(GameMemberQuestion)
         .filter(
-            GameQuestion.game_id == game_id,
-            GameQuestion.id == active_question.game_question_id,
+            GameMemberQuestion.member_id == member_id,
+            GameMemberQuestion.answered_at.is_(None),  #  type: ignore
         )
         .first()
     )
