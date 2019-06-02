@@ -232,3 +232,15 @@ def test_add_position():
         assert len(placements) == 2
         assert placements[0].member_id == other_member_id
         assert placements[1].member_id == member_id
+
+        # Call question selection to get next question
+        res_get_next_question_ended_game = client.get(
+            f"/v1/games/{game_id}/members/{member_id}/next-question?lat=59.318078&long=18.063551",
+            headers=headers(user_id),
+            content_type=JSON,
+        )
+        assert (
+            res_get_next_question_ended_game.status_code
+            == status.HTTP_428_PRECONDITION_REQUIRED
+        )
+        assert res_get_next_question_ended_game.get_json()["errorId"] == "GAME_ENDED"

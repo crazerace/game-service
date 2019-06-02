@@ -12,16 +12,25 @@ from crazerace.http.error import (
 from crazerace.http.instrumentation import trace
 
 # Internal modules
+from app.error import GameEndedError
 from app.models import Game, GameMember, GameQuestion, Question
 from app.models.dto import CreateGameDTO, GameDTO, GameMemberDTO
 from app.repository import game_repo, member_repo
 
 
 @trace("game_state_util")
-def assert_game_exists(game_id: str) -> None:
+def assert_game_exists(game_id: str) -> Game:
     game = game_repo.find(game_id)
     if not game:
         raise PreconditionRequiredError(f"Game with id={game_id} does not exit")
+    return game
+
+
+@trace("game_state_util")
+def assert_active_game_exists(game_id: str) -> Game:
+    game = assert_game_exists(game_id)
+    if game.ended_at is not None:
+        raise GameEndedError(game_id)
     return game
 
 

@@ -48,7 +48,7 @@ def find_questions_for_game(game: Game, coordinate: CoordinateDTO) -> List[Quest
 def get_members_next_question(
     game_id: str, member_id: str, user_id: str, current_position: CoordinateDTO
 ) -> QuestionDTO:
-    game = game_state_util.assert_game_exists(game_id)
+    game = game_state_util.assert_active_game_exists(game_id)
     game_state_util.assert_valid_game_member(game_id, member_id, user_id)
     active_question = question_repo.find_members_active_question(game_id, member_id)
     if active_question:
