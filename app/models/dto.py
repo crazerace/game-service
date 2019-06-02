@@ -175,15 +175,17 @@ class PositionDTO:
 @dataclass(frozen=True)
 class PositionResultDTO:
     is_answer: bool
+    game_finished: bool
     question: Optional[QuestionDTO] = None
 
     @classmethod
     def incorrect(cls) -> "PositionResultDTO":
-        return PositionResultDTO(is_answer=False)
+        return PositionResultDTO(is_answer=False, game_finished=False)
 
     def todict(self) -> Dict[str, Any]:
         return {
             "isAnswer": self.is_answer,
+            "gameFinished": self.game_finished,
             "question": self.question.todict() if self.question else None,
         }
 

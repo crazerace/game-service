@@ -1,11 +1,12 @@
 # Standard libraries
 import logging
 from datetime import datetime
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 # 3rd party libraries
 from crazerace.http.error import ConflictError, InternalServerError
 from crazerace.http.instrumentation import trace
+from sqlalchemy import func
 
 # Internal modules
 from app import db
@@ -98,8 +99,25 @@ def set_member_question_as_answered(question_id: str, position: Position) -> Non
         return InternalServerError("Could not find active question")
 
     active_question.answered_at = datetime.utcnow()
-    active_question.answer_position_id = position.id
+    active_question.position_id = position.id
     db.session.commit()
+
+
+@trace("question_repo")
+def count_answered_questions(game_id: str) -> Dict[str, int]:
+    answer_counts = (
+        db.session.query(
+            GameMemberQuestion.member_id, func.count(GameMemberQuestion.member_id)
+        )
+        .join(GameMember)
+        .filter(
+            GameMember.game_id == game_id,
+            GameMemberQuestion.position_id.isnot(None),  # type: ignore
+        )
+        .group_by(GameMemberQuestion.member_id)
+        .all()
+    )
+    return {member_id: count for member_id, count in answer_counts}
 
 
 @trace("question_repo")

@@ -246,21 +246,21 @@ def test_get_members_next_question():
     answered_question_1 = GameMemberQuestion(
         member_id=other_member_id,
         game_question_id=1,
-        answer_position_id=pos_1_id,
+        position_id=pos_1_id,
         answered_at=datetime.utcnow(),
         created_at=datetime.utcnow(),
     )
     answered_question_2 = GameMemberQuestion(
         member_id=member_3_id,
         game_question_id=2,
-        answer_position_id=pos_2_id,
+        position_id=pos_2_id,
         answered_at=datetime.utcnow(),
         created_at=datetime.utcnow(),
     )
     answered_question_3 = GameMemberQuestion(
         member_id=member_3_id,
         game_question_id=3,
-        answer_position_id=pos_3_id,
+        position_id=pos_3_id,
         answered_at=datetime.utcnow(),
         created_at=datetime.utcnow(),
     )

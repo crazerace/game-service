@@ -44,7 +44,7 @@ class GameMemberQuestion(db.Model):  # type: ignore
     game_question_id: int = db.Column(
         db.Integer, db.ForeignKey("game_question.id"), nullable=False
     )
-    answer_position_id: Optional[str] = db.Column(
+    position_id: Optional[str] = db.Column(
         db.String(50), db.ForeignKey("game_member_position.id"), nullable=True
     )
     answered_at: Optional[datetime] = db.Column(db.DateTime, nullable=True)
@@ -70,7 +70,7 @@ class GameMember(db.Model):  # type: ignore
     user_id: str = db.Column(db.String(50), nullable=False)
     is_admin: bool = db.Column(db.Boolean, nullable=False, default=False)
     is_ready: bool = db.Column(db.Boolean, nullable=False, default=False)
-    resigned_at: datetime = db.Column(db.DateTime, nullable=True)
+    resigned_at: Optional[datetime] = db.Column(db.DateTime, nullable=True)
     created_at: datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     positions: List[Position] = db.relationship(
         "Position", backref="game_member", lazy=True
