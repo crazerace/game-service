@@ -62,7 +62,7 @@ def get_members_next_question(
 def _select_questions(
     questions: List[Question], origin: CoordinateDTO, no_questions: int
 ) -> List[Question]:
-    _assert_engough_questions(questions, no_questions)
+    _assert_enough_questions(questions, no_questions)
     selected: List[Question] = []
     for _ in range(no_questions):
         question = _select_question(questions, origin, selected)
@@ -111,7 +111,7 @@ def _previous_are_far_enough(
 def _select_closest_question(
     questions: List[Question], coordinate: CoordinateDTO
 ) -> Question:
-    _assert_engough_questions(questions, 1)
+    _assert_enough_questions(questions, 1)
     if len(questions) == 1:
         return questions[0]
     candidates = _filter_to_close_questions(questions, coordinate)
@@ -132,7 +132,7 @@ def _filter_to_close_questions(
 def _find_closest_question(
     questions: List[Question], coordinate: CoordinateDTO
 ) -> Question:
-    _assert_engough_questions(questions, 1)
+    _assert_enough_questions(questions, 1)
     closest = questions[0]
     closest_distance = distance_util.calculate(closest.coordinate(), coordinate)
     for question in questions:
@@ -152,7 +152,7 @@ def _create_and_save_game_member_question(
     )
 
 
-def _assert_engough_questions(questions: List[Question], expected: int) -> None:
+def _assert_enough_questions(questions: List[Question], expected: int) -> None:
     if len(questions) < expected:
         raise InternalServerError("Not enough questions")
 
