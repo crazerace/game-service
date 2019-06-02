@@ -1,14 +1,22 @@
 # Standard libraries
 import logging
+from datetime import datetime
 from typing import List, Optional
 
 # 3rd party libraries
-from crazerace.http.error import ConflictError
+from crazerace.http.error import ConflictError, InternalServerError
 from crazerace.http.instrumentation import trace
 
 # Internal modules
 from app import db
-from app.models import Question, Game, GameMember, GameQuestion, GameMemberQuestion
+from app.models import (
+    Question,
+    Game,
+    GameMember,
+    GameQuestion,
+    GameMemberQuestion,
+    Position,
+)
 from .util import handle_error
 
 
@@ -81,6 +89,25 @@ def find_members_active_question(game_id: str, member_id: str) -> Optional[Quest
         )
         .first()
     )
+
+
+@trace("question_repo")
+def set_member_question_as_answered(question_id: str, position: Position) -> None:
+    active_question = (
+        GameMemberQuestion.query.join(GameQuestion)
+        .filter(
+            GameMemberQuestion.member_id == position.game_member_id,
+            GameMemberQuestion.answered_at.is_(None),  #  type: ignore
+            GameQuestion.question_id == question_id,
+        )
+        .first()
+    )
+    if not active_question:
+        return InternalServerError("Could not find active question")
+
+    active_question.answered_at = datetime.utcnow()
+    active_question.answer_position_id = position.id
+    db.session.commit()
 
 
 @trace("question_repo")

@@ -20,7 +20,7 @@ class Position(db.Model):  # type: ignore
 
     def __repr__(self) -> str:
         return (
-            f"GameMemberPosition(id={self.id} "
+            f"Position(id={self.id} "
             f"game_member_id={self.game_member_id} "
             f"latitude={self.latitude} "
             f"longitude={self.longitude} "

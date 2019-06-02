@@ -61,11 +61,10 @@ def get_current_question(game_id: str, member_id: str) -> flask.Response:
     return controller.get_members_next_question(game_id, member_id)
 
 
-# Update position
 @app.route("/v1/games/<game_id>/members/<member_id>/position", methods=["POST"])
 @secured(JWT_SECRET)
 def add_user_position(game_id: str, member_id: str) -> flask.Response:
-    return http.create_ok_response()
+    return controller.add_position(game_id, member_id)
 
 
 @app.route("/v1/questions/<question_id>", methods=["GET"])

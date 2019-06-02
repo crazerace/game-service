@@ -7,7 +7,7 @@ from crazerace.http import status
 
 # Intenal modules
 from tests import TestEnvironment, JSON, headers, new_id
-from app.repository import question_repo
+from app.repository import position_repo, question_repo
 from app.models import (
     Question,
     Game,
@@ -71,6 +71,8 @@ def test_add_position():
 
     db_items = [question, game, pos, member_question]
     with TestEnvironment(db_items) as client:
+        assert len(position_repo.find_member_positions(member_id)) == 1
+
         # Registering a position 66.27 meters from question 1. Should NOT return answer
         res_miss = client.post(
             f"/v1/games/{game_id}/members/{member_id}/position",
@@ -82,6 +84,9 @@ def test_add_position():
         miss_body = res_miss.get_json()
         assert not miss_body["isAnswer"]
         assert miss_body["question"] is None
+        assert len(position_repo.find_member_positions(member_id)) == 2
+        active_question = question_repo.find_members_active_question(game_id, member_id)
+        assert active_question.id == question_id
 
         # Registering a position 9.02 meters from question 1. Should return answer
         res_success = client.post(
@@ -96,3 +101,5 @@ def test_add_position():
         assert success_body["question"]["id"] == question_id
         assert success_body["question"]["answer"] == "a1"
         assert success_body["question"]["answer_en"] == "a1-en"
+        assert len(position_repo.find_member_positions(member_id)) == 3
+        assert question_repo.find_members_active_question(game_id, member_id) is None
