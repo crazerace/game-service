@@ -1,7 +1,6 @@
 # Standard libraries
 import logging
 from typing import List
-from datetime import datetime
 
 # 3rd party libraries
 from crazerace.http.instrumentation import trace

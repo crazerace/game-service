@@ -13,9 +13,9 @@ from crazerace.http.instrumentation import trace
 
 # Internal modules
 from app.config import MAX_ANSWER_DISTANCE
-from app.models import Game, GameMember, Position, Question
+from app.models import Game, GameMember, Position, Question, Placement
 from app.models.dto import PositionDTO, PositionResultDTO
-from app.repository import position_repo, question_repo
+from app.repository import position_repo, question_repo, placement_repo
 from app.service import game_service, question_service, distance_util, game_state_util
 
 
@@ -54,6 +54,7 @@ def _answer_question(
 ) -> bool:
     question_repo.set_member_question_as_answered(question.id, position)
     if _member_is_done(game, member):
+        placement_repo.save(Placement(game_id=game.id, member_id=member.id))
         return game_service.check_if_game_ended(game)
     return False
 

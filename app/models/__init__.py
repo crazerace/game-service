@@ -126,12 +126,30 @@ class GameQuestion(db.Model):  # type: ignore
         return f"GameQuestion(game_id={self.game_id} question_id={self.question_id})"
 
 
+class Placement(db.Model):  # type: ignore
+    __tablename__ = "game_placement"
+    __table_args__ = (
+        db.UniqueConstraint("game_id", "member_id", name="unique_game_id_member_id"),
+    )
+    id: int = db.Column(db.Integer, primary_key=True)
+    game_id: str = db.Column(db.String(50), db.ForeignKey("game.id"), nullable=False)
+    member_id: str = db.Column(
+        db.String(50), db.ForeignKey("game_member.id"), nullable=False
+    )
+    created_at: datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def __repr__(self) -> str:
+        return (
+            f"Placement(id={self.id}, "
+            f"game_id={self.game_id}, "
+            f"member_id={self.member_id}, "
+            f"created_at={self.created_at})"
+        )
+
+
 class Game(db.Model):  # type: ignore
     id: str = db.Column(db.String(50), primary_key=True)
     name: str = db.Column(db.String(100), nullable=False)
-    first: str = db.Column(db.String(50), nullable=True)
-    second: str = db.Column(db.String(50), nullable=True)
-    third: str = db.Column(db.String(50), nullable=True)
     started_at: Optional[datetime] = db.Column(db.DateTime, nullable=True)
     ended_at: Optional[datetime] = db.Column(db.DateTime, nullable=True)
     created_at: datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -139,16 +157,14 @@ class Game(db.Model):  # type: ignore
         "GameQuestion", backref="game", lazy=True
     )
     members: List[GameMember] = db.relationship("GameMember", backref="game", lazy=True)
+    placements: List[Placement] = db.relationship("Placement", backref="game", lazy=True)
 
     def __repr__(self) -> str:
         return (
-            f"Game(id={self.id} "
-            f"name={self.name} "
-            f"first={self.first} "
-            f"second={self.second} "
-            f"third={self.third} "
-            f"started_at={self.started_at} "
-            f"ended_at={self.ended_at} "
+            f"Game(id={self.id}, "
+            f"name={self.name}, "
+            f"started_at={self.started_at}, "
+            f"ended_at={self.ended_at}, "
             f"created_at={self.created_at})"
         )
 

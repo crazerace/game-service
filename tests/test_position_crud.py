@@ -7,11 +7,12 @@ from crazerace.http import status
 
 # Intenal modules
 from tests import TestEnvironment, JSON, headers, new_id
-from app.repository import position_repo, question_repo
+from app.repository import position_repo, question_repo, placement_repo
 from app.models import (
     Question,
     Game,
     GameMember,
+    Placement,
     Position,
     GameMemberQuestion,
     GameQuestion,
@@ -86,6 +87,11 @@ def test_add_position():
             GameQuestion(id=1, game_id=game_id, question_id=question_1_id),
             GameQuestion(id=2, game_id=game_id, question_id=question_2_id),
         ],
+        placements=[
+            Placement(
+                game_id=game_id, member_id=other_member_id, created_at=one_minute_ago
+            )
+        ],
     )
 
     pos_1_id = new_id()
@@ -152,6 +158,8 @@ def test_add_position():
     ]
     with TestEnvironment(db_items) as client:
         assert len(position_repo.find_member_positions(member_id)) == 1
+        placements = placement_repo.find_game_placements(game_id)
+        assert len(placements) == 1 and placements[0].member_id == other_member_id
 
         # Registering a position 66.27 meters from question 1. Should NOT return answer
         res_miss = client.post(
@@ -169,6 +177,9 @@ def test_add_position():
         active_question = question_repo.find_members_active_question(game_id, member_id)
         assert active_question.id == question_1_id
 
+        placements = placement_repo.find_game_placements(game_id)
+        assert len(placements) == 1 and placements[0].member_id == other_member_id
+
         # Registering a position 9.02 meters from question 1. Should return answer
         res_success = client.post(
             f"/v1/games/{game_id}/members/{member_id}/position",
@@ -184,6 +195,9 @@ def test_add_position():
         assert success_body["question"]["answer"] == "a1"
         assert success_body["question"]["answer_en"] == "a1-en"
         assert len(position_repo.find_member_positions(member_id)) == 3
+
+        placements = placement_repo.find_game_placements(game_id)
+        assert len(placements) == 1 and placements[0].member_id == other_member_id
 
         # Call question selection to get next question
         res_get_next_question = client.get(
@@ -213,3 +227,8 @@ def test_add_position():
         assert final_body["question"]["answer"] == "a2"
         assert final_body["question"]["answer_en"] == "a2-en"
         assert len(position_repo.find_member_positions(member_id)) == 4
+
+        placements = placement_repo.find_game_placements(game_id)
+        assert len(placements) == 2
+        assert placements[0].member_id == other_member_id
+        assert placements[1].member_id == member_id
