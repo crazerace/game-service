@@ -8,7 +8,7 @@ from crazerace.http.instrumentation import trace
 
 # Internal modules
 from app import db
-from app.models import Question, Game, GameMember, GameQuestion
+from app.models import Question, Game, GameMember, GameQuestion, GameMemberQuestion
 from .util import handle_error
 
 
@@ -39,6 +39,55 @@ def find_previous_question_ids(game: Game) -> List[str]:
         .all()
     )
     return list({game_question.question_id for game_question, _ in res})
+
+
+# The performance of this probably sucks, should be refactored
+@trace("question_repo")
+def find_members_possible_questions(game_id: str, member_id: str) -> List[Question]:
+    answered_ids = [
+        q.game_question_id
+        for q in GameMemberQuestion.query.filter(
+            GameMemberQuestion.member_id == member_id,
+            GameMemberQuestion.answered_at.isnot(None),  #  type: ignore
+        ).all()
+    ]
+    return (
+        db.session.query(Question)
+        .join(GameQuestion)
+        .filter(
+            GameQuestion.game_id == game_id,
+            GameQuestion.id.notin_(answered_ids),  # type: ignore
+        )
+        .all()
+    )
+
+
+# The performance of this probably sucks, should be refactored
+@trace("question_repo")
+def find_members_active_question(game_id: str, member_id: str) -> Optional[Question]:
+    active_question = GameMemberQuestion.query.filter(
+        GameMemberQuestion.member_id == member_id,
+        GameMemberQuestion.answered_at.is_(None),  #  type: ignore
+    ).first()
+    if not active_question:
+        return None
+
+    return (
+        db.session.query(Question)
+        .join(GameQuestion)
+        .filter(
+            GameQuestion.game_id == game_id,
+            GameQuestion.id == active_question.game_question_id,
+        )
+        .first()
+    )
+
+
+@trace("question_repo")
+@handle_error(logger=_log, integrity_error_class=ConflictError)
+def save_game_member_question(question: GameMemberQuestion) -> None:
+    db.session.add(question)
+    db.session.commit()
 
 
 @trace("question_repo")

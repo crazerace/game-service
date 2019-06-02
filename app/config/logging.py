@@ -19,3 +19,5 @@ LOGGING_CONIFG = {
     },
     "root": {"handlers": ["console"], "level": logging.DEBUG},
 }
+
+logging.getLogger("werkzeug").setLevel(logging.ERROR)
