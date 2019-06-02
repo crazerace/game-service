@@ -70,7 +70,6 @@ def find_members_possible_questions(game_id: str, member_id: str) -> List[Questi
     )
 
 
-# The performance of this probably sucks, should be refactored
 @trace("question_repo")
 def find_members_active_question(game_id: str, member_id: str) -> Optional[Question]:
     return (
