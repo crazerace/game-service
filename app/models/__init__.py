@@ -167,21 +167,3 @@ class Game(db.Model):  # type: ignore
             f"ended_at={self.ended_at}, "
             f"created_at={self.created_at})"
         )
-
-
-class TranslatedText(db.Model):  # type: ignore
-    __table_args__ = (db.UniqueConstraint("key", "language", name="unique_key_language"),)
-    id: int = db.Column(db.Integer, primary_key=True)
-    key: str = db.Column(db.String(50), nullable=False)
-    language: str = db.Column(db.String(100), nullable=False)
-    text: str = db.Column(db.Text, nullable=False)
-    created_at: datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-    def __repr__(self) -> str:
-        return (
-            f"TranslatedText(id={self.id} "
-            f"key={self.key} "
-            f"language={self.language} "
-            f"text={self.text} "
-            f"created_at={self.created_at})"
-        )
