@@ -20,7 +20,7 @@ class Position(db.Model):  # type: ignore
 
     def __repr__(self) -> str:
         return (
-            f"GameMemberPosition(id={self.id} "
+            f"Position(id={self.id} "
             f"game_member_id={self.game_member_id} "
             f"latitude={self.latitude} "
             f"longitude={self.longitude} "
@@ -44,7 +44,7 @@ class GameMemberQuestion(db.Model):  # type: ignore
     game_question_id: int = db.Column(
         db.Integer, db.ForeignKey("game_question.id"), nullable=False
     )
-    answer_position_id: Optional[str] = db.Column(
+    position_id: Optional[str] = db.Column(
         db.String(50), db.ForeignKey("game_member_position.id"), nullable=True
     )
     answered_at: Optional[datetime] = db.Column(db.DateTime, nullable=True)
@@ -70,7 +70,7 @@ class GameMember(db.Model):  # type: ignore
     user_id: str = db.Column(db.String(50), nullable=False)
     is_admin: bool = db.Column(db.Boolean, nullable=False, default=False)
     is_ready: bool = db.Column(db.Boolean, nullable=False, default=False)
-    resigned_at: datetime = db.Column(db.DateTime, nullable=True)
+    resigned_at: Optional[datetime] = db.Column(db.DateTime, nullable=True)
     created_at: datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     positions: List[Position] = db.relationship(
         "Position", backref="game_member", lazy=True
@@ -126,12 +126,30 @@ class GameQuestion(db.Model):  # type: ignore
         return f"GameQuestion(game_id={self.game_id} question_id={self.question_id})"
 
 
+class Placement(db.Model):  # type: ignore
+    __tablename__ = "game_placement"
+    __table_args__ = (
+        db.UniqueConstraint("game_id", "member_id", name="unique_game_id_member_id"),
+    )
+    id: int = db.Column(db.Integer, primary_key=True)
+    game_id: str = db.Column(db.String(50), db.ForeignKey("game.id"), nullable=False)
+    member_id: str = db.Column(
+        db.String(50), db.ForeignKey("game_member.id"), nullable=False
+    )
+    created_at: datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    def __repr__(self) -> str:
+        return (
+            f"Placement(id={self.id}, "
+            f"game_id={self.game_id}, "
+            f"member_id={self.member_id}, "
+            f"created_at={self.created_at})"
+        )
+
+
 class Game(db.Model):  # type: ignore
     id: str = db.Column(db.String(50), primary_key=True)
     name: str = db.Column(db.String(100), nullable=False)
-    first: str = db.Column(db.String(50), nullable=True)
-    second: str = db.Column(db.String(50), nullable=True)
-    third: str = db.Column(db.String(50), nullable=True)
     started_at: Optional[datetime] = db.Column(db.DateTime, nullable=True)
     ended_at: Optional[datetime] = db.Column(db.DateTime, nullable=True)
     created_at: datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -139,33 +157,13 @@ class Game(db.Model):  # type: ignore
         "GameQuestion", backref="game", lazy=True
     )
     members: List[GameMember] = db.relationship("GameMember", backref="game", lazy=True)
+    placements: List[Placement] = db.relationship("Placement", backref="game", lazy=True)
 
     def __repr__(self) -> str:
         return (
-            f"Game(id={self.id} "
-            f"name={self.name} "
-            f"first={self.first} "
-            f"second={self.second} "
-            f"third={self.third} "
-            f"started_at={self.started_at} "
-            f"ended_at={self.ended_at} "
-            f"created_at={self.created_at})"
-        )
-
-
-class TranslatedText(db.Model):  # type: ignore
-    __table_args__ = (db.UniqueConstraint("key", "language", name="unique_key_language"),)
-    id: int = db.Column(db.Integer, primary_key=True)
-    key: str = db.Column(db.String(50), nullable=False)
-    language: str = db.Column(db.String(100), nullable=False)
-    text: str = db.Column(db.Text, nullable=False)
-    created_at: datetime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-    def __repr__(self) -> str:
-        return (
-            f"TranslatedText(id={self.id} "
-            f"key={self.key} "
-            f"language={self.language} "
-            f"text={self.text} "
+            f"Game(id={self.id}, "
+            f"name={self.name}, "
+            f"started_at={self.started_at}, "
+            f"ended_at={self.ended_at}, "
             f"created_at={self.created_at})"
         )

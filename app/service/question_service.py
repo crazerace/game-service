@@ -34,7 +34,7 @@ def get_question(question_id: str) -> QuestionDTO:
     question = question_repo.find(question_id)
     if not question:
         raise NotFoundError()
-    return _question_to_dto(question)
+    return to_dto(question)
 
 
 @trace("question_service")
@@ -48,15 +48,15 @@ def find_questions_for_game(game: Game, coordinate: CoordinateDTO) -> List[Quest
 def get_members_next_question(
     game_id: str, member_id: str, user_id: str, current_position: CoordinateDTO
 ) -> QuestionDTO:
-    game = game_state_util.assert_game_exists(game_id)
+    game = game_state_util.assert_active_game_exists(game_id)
     game_state_util.assert_valid_game_member(game_id, member_id, user_id)
     active_question = question_repo.find_members_active_question(game_id, member_id)
     if active_question:
-        return _question_to_dto(active_question)
+        return to_dto(active_question)
     questions = question_repo.find_members_possible_questions(game_id, member_id)
     question = _select_closest_question(questions, current_position)
     _create_and_save_game_member_question(game, member_id, question)
-    return _question_to_dto(question)
+    return to_dto(question)
 
 
 def _select_questions(
@@ -161,7 +161,7 @@ def _filter_questions(questions: List[Question], exclude: Question) -> List[Ques
     return [q for q in questions if q.id != exclude.id]
 
 
-def _question_to_dto(question: Question) -> QuestionDTO:
+def to_dto(question: Question) -> QuestionDTO:
     return QuestionDTO(
         id=question.id,
         latitude=question.latitude,

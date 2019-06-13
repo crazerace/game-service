@@ -1,14 +1,23 @@
 # Standard libraries
 import logging
-from typing import List, Optional
+from datetime import datetime
+from typing import Dict, List, Optional
 
 # 3rd party libraries
-from crazerace.http.error import ConflictError
+from crazerace.http.error import ConflictError, InternalServerError
 from crazerace.http.instrumentation import trace
+from sqlalchemy import func
 
 # Internal modules
 from app import db
-from app.models import Question, Game, GameMember, GameQuestion, GameMemberQuestion
+from app.models import (
+    Question,
+    Game,
+    GameMember,
+    GameQuestion,
+    GameMemberQuestion,
+    Position,
+)
 from .util import handle_error
 
 
@@ -62,25 +71,53 @@ def find_members_possible_questions(game_id: str, member_id: str) -> List[Questi
     )
 
 
-# The performance of this probably sucks, should be refactored
 @trace("question_repo")
 def find_members_active_question(game_id: str, member_id: str) -> Optional[Question]:
-    active_question = GameMemberQuestion.query.filter(
-        GameMemberQuestion.member_id == member_id,
-        GameMemberQuestion.answered_at.is_(None),  #  type: ignore
-    ).first()
-    if not active_question:
-        return None
-
     return (
-        db.session.query(Question)
-        .join(GameQuestion)
+        Question.query.join(GameQuestion)
+        .join(GameMemberQuestion)
         .filter(
-            GameQuestion.game_id == game_id,
-            GameQuestion.id == active_question.game_question_id,
+            GameMemberQuestion.member_id == member_id,
+            GameMemberQuestion.answered_at.is_(None),  #  type: ignore
         )
         .first()
     )
+
+
+@trace("question_repo")
+def set_member_question_as_answered(question_id: str, position: Position) -> None:
+    active_question = (
+        GameMemberQuestion.query.join(GameQuestion)
+        .filter(
+            GameMemberQuestion.member_id == position.game_member_id,
+            GameMemberQuestion.answered_at.is_(None),  #  type: ignore
+            GameQuestion.question_id == question_id,
+        )
+        .first()
+    )
+    if not active_question:
+        return InternalServerError("Could not find active question")
+
+    active_question.answered_at = datetime.utcnow()
+    active_question.position_id = position.id
+    db.session.commit()
+
+
+@trace("question_repo")
+def count_answered_questions(game_id: str) -> Dict[str, int]:
+    answer_counts = (
+        db.session.query(
+            GameMemberQuestion.member_id, func.count(GameMemberQuestion.member_id)
+        )
+        .join(GameMember)
+        .filter(
+            GameMember.game_id == game_id,
+            GameMemberQuestion.position_id.isnot(None),  # type: ignore
+        )
+        .group_by(GameMemberQuestion.member_id)
+        .all()
+    )
+    return {member_id: count for member_id, count in answer_counts}
 
 
 @trace("question_repo")

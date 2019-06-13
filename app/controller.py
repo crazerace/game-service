@@ -13,9 +13,10 @@ from crazerace.http.instrumentation import trace
 # Internal modules
 from app.service import health
 from app.service import health, game_service
-from app.models.dto import QuestionDTO, CreateGameDTO, CoordinateDTO
+from app.models.dto import QuestionDTO, CreateGameDTO, CoordinateDTO, PositionDTO
 from app.service import game_service
 from app.service import question_service
+from app.service import position_service
 
 
 _log = logging.getLogger(__name__)
@@ -107,6 +108,14 @@ def get_members_next_question(game_id: str, member_id: str) -> flask.Response:
         game_id, member_id, user_id, coordinate
     )
     return http.create_response(question.only_question().todict())
+
+
+@trace("controller")
+def add_position(game_id: str, member_id: str) -> flask.Response:
+    user_id = request.user_id
+    position = PositionDTO.fromdict(member_id, get_request_body("latitude", "longitude"))
+    result = position_service.add_position(game_id, user_id, position)
+    return http.create_response(result.todict())
 
 
 def _get_coordinate_from_query() -> CoordinateDTO:

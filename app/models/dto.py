@@ -150,7 +150,47 @@ class GameDTO:
         }
 
 
-@dataclass
+@dataclass(frozen=True)
+class PositionDTO:
+    id: str
+    game_member_id: str
+    latitude: float
+    longitude: float
+    created_at: datetime
+
+    @classmethod
+    def fromdict(cls, member_id: str, raw: Dict[str, Any]) -> "PositionDTO":
+        try:
+            return cls(
+                id=raw["id"] if "id" in raw else _new_id(),
+                game_member_id=member_id,
+                latitude=float(raw["latitude"]),
+                longitude=float(raw["longitude"]),
+                created_at=datetime.utcnow(),
+            )
+        except (KeyError, ValueError) as e:
+            raise BadRequestError("Incorrect values of longitude or latitude")
+
+
+@dataclass(frozen=True)
+class PositionResultDTO:
+    is_answer: bool
+    game_finished: bool
+    question: Optional[QuestionDTO] = None
+
+    @classmethod
+    def incorrect(cls) -> "PositionResultDTO":
+        return PositionResultDTO(is_answer=False, game_finished=False)
+
+    def todict(self) -> Dict[str, Any]:
+        return {
+            "isAnswer": self.is_answer,
+            "gameFinished": self.game_finished,
+            "question": self.question.todict() if self.question else None,
+        }
+
+
+@dataclass(frozen=True)
 class CoordinateDTO:
     latitude: float
     longitude: float
