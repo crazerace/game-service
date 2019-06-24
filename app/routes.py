@@ -55,7 +55,7 @@ def start_game(game_id: str) -> flask.Response:
     return controller.start_game(game_id)
 
 
-@app.route("/v1/games/<game_id>/members/<member_id>/leave", methods=["PUT"])
+@app.route("/v1/games/<game_id>/members/<member_id>", methods=["DELETE"])
 @secured(JWT_SECRET)
 def leave_game(game_id: str, member_id: str) -> flask.Response:
     return controller.leave_game(game_id, member_id)

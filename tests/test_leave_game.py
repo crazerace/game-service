@@ -60,18 +60,16 @@ def test_leave_game():
     ) as client:
 
         # If game not started, remove game member from Game
-        res_ok = client.put(
-            f"/v1/games/{game1_id}/members/{game1_member_id}/leave",
-            headers=headers(user_id),
+        res_ok = client.delete(
+            f"/v1/games/{game1_id}/members/{game1_member_id}", headers=headers(user_id)
         )
         assert res_ok.status_code == status.HTTP_200_OK
         game = game_repo.find(game1_id)
         assert len(game.members) == 0
 
         # If game started, set Game Member to resigned
-        res_ok2 = client.put(
-            f"/v1/games/{game2_id}/members/{game2_member_id}/leave",
-            headers=headers(user_id),
+        res_ok2 = client.delete(
+            f"/v1/games/{game2_id}/members/{game2_member_id}", headers=headers(user_id)
         )
         assert res_ok2.status_code == status.HTTP_200_OK
         game = game_repo.find(game2_id)
@@ -80,15 +78,15 @@ def test_leave_game():
         assert member.resigned_at is not None
 
         # user tries to make another user's GameMember leave a started game
-        res_bad = client.put(
-            f"/v1/games/{game1_id}/members/{other_member_id}/leave",
+        res_bad = client.delete(
+            f"/v1/games/{game1_id}/members/{other_member_id}",
             headers=headers(other_member_id),
         )
         assert res_bad.status_code == status.HTTP_403_FORBIDDEN
 
         # If Game Member not in unstarted Game
-        res_bad = client.put(
-            f"/v1/games/{game2_id}/members/{other_member_id}/leave",
+        res_bad = client.delete(
+            f"/v1/games/{game2_id}/members/{other_member_id}",
             headers=headers(other_member_id),
         )
         assert res_bad.status_code == status.HTTP_403_FORBIDDEN
@@ -140,9 +138,8 @@ def test_all_players_resign_game():
     with TestEnvironment([game1_member, game2_member, game_not_member, game]) as client:
 
         # Player 1 of 2 resigns, game should not end
-        res_member1_resigns = client.put(
-            f"/v1/games/{game_id}/members/{game1_member_id}/leave",
-            headers=headers(user1_id),
+        res_member1_resigns = client.delete(
+            f"/v1/games/{game_id}/members/{game1_member_id}", headers=headers(user1_id)
         )
         assert res_member1_resigns.status_code == status.HTTP_200_OK
 
@@ -150,18 +147,16 @@ def test_all_players_resign_game():
         assert game.ended_at == None
 
         # Player not member in game resigns game
-        res__not_member_resigns = client.put(
-            f"/v1/games/{game_id}/members/{game_not_member_id}/leave",
-            headers=headers(user3_id),
+        res__not_member_resigns = client.delete(
+            f"/v1/games/{game_id}/members/{game_not_member_id}", headers=headers(user3_id)
         )
         assert (
             res__not_member_resigns.status_code == status.HTTP_428_PRECONDITION_REQUIRED
         )
 
         # Player 2 of 2 resigns, game should end
-        res_member2_resigns = client.put(
-            f"/v1/games/{game_id}/members/{game2_member_id}/leave",
-            headers=headers(user2_id),
+        res_member2_resigns = client.delete(
+            f"/v1/games/{game_id}/members/{game2_member_id}", headers=headers(user2_id)
         )
         assert res_member2_resigns.status_code == status.HTTP_200_OK
 

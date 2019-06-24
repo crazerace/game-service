@@ -82,6 +82,7 @@ def set_game_member_as_ready(game_id: str, member_id: str, user_id: str) -> None
 @trace("game_service")
 def leave_game(game_id: str, member_id: str, user_id: str) -> None:
     game = game_state_util.assert_game_exists(game_id)
+    # TODO: Admin should be able to delete a memeber from a game.
     member = game_state_util.assert_valid_game_member(game_id, member_id, user_id)
     if game.started_at is None:
         member_repo.delete_member(member)
