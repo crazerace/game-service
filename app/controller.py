@@ -86,6 +86,12 @@ def get_game(game_id: str) -> flask.Response:
 
 
 @trace("controller")
+def get_game_by_shortcode(short_code: str) -> flask.Response:
+    game = game_service.get_game_by_shortcode(short_code)
+    return http.create_response(game.todict())
+
+
+@trace("controller")
 def start_game(game_id: str) -> flask.Response:
     user_id: str = request.user_id
     coordinate = _get_coordinate_from_query()
@@ -113,7 +119,9 @@ def get_members_next_question(game_id: str, member_id: str) -> flask.Response:
 @trace("controller")
 def add_position(game_id: str, member_id: str) -> flask.Response:
     user_id = request.user_id
-    position = PositionDTO.fromdict(member_id, get_request_body("latitude", "longitude"))
+    position = PositionDTO.fromdict(
+        member_id, get_request_body("latitude", "longitude")
+    )
     result = position_service.add_position(game_id, user_id, position)
     return http.create_response(result.todict())
 

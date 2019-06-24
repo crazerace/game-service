@@ -150,6 +150,15 @@ class GameDTO:
         }
 
 
+@dataclass
+class GameInfoDTO:
+    id: str
+    name: str
+
+    def todict(self) -> Dict[str, Any]:
+        return {"id": self.id, "name": self.name}
+
+
 @dataclass(frozen=True)
 class PositionDTO:
     id: str

@@ -8,12 +8,19 @@ from crazerace.http.error import (
     ForbiddenError,
     NotFoundError,
     ConflictError,
+    BadRequestError,
 )
 from crazerace.http.instrumentation import trace
 
 # Internal modules
 from app.models import Game, GameMember, GameQuestion, Question
-from app.models.dto import CreateGameDTO, GameDTO, GameMemberDTO, CoordinateDTO
+from app.models.dto import (
+    CreateGameDTO,
+    GameDTO,
+    GameMemberDTO,
+    CoordinateDTO,
+    GameInfoDTO,
+)
 from app.repository import game_repo, member_repo, question_repo
 from app.service import util, question_service, game_state_util
 
@@ -26,7 +33,10 @@ def create_game(new_game: CreateGameDTO, user_id: str) -> None:
         created_at=new_game.created_at,
         members=[
             GameMember(
-                id=util.new_id(), user_id=user_id, game_id=new_game.game_id, is_admin=True
+                id=util.new_id(),
+                user_id=user_id,
+                game_id=new_game.game_id,
+                is_admin=True,
             )
         ],
     )
@@ -55,6 +65,15 @@ def get_game(id: str) -> GameDTO:
         ended_at=game.ended_at,
         members=_map_members_to_dto(game.members),
     )
+
+
+@trace("game_service")
+def get_game_by_shortcode(short_code: str) -> GameDTO:
+    _assert_valid_shortcode(short_code)
+    game = game_repo.find_by_shortcode(short_code)
+    if not game:
+        raise NotFoundError(f"No unstarted game found with code: {short_code}")
+    return GameInfoDTO(id=game.id, name=game.name)
 
 
 @trace("game_service")
@@ -130,6 +149,14 @@ def _map_members_to_dto(members: List[GameMember]) -> List[GameMemberDTO]:
     ]
 
 
-def _map_questions_to_game(game_id: str, questions: List[Question]) -> List[GameQuestion]:
+def _map_questions_to_game(
+    game_id: str, questions: List[Question]
+) -> List[GameQuestion]:
     return [GameQuestion(game_id=game_id, question_id=q.id) for q in questions]
 
+
+def _assert_valid_shortcode(short_code: str) -> None:
+    if not len(short_code) == 4:
+        raise BadRequestError(f"Invalid shortcode length")
+    elif not short_code.isalnum():
+        raise BadRequestError(f"Shortcode contains invalid characters")
