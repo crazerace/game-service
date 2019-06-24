@@ -267,3 +267,65 @@ def test_get_game():
         res_missing = client.get(f"/v1/games/{new_id()}", headers=headers_ok)
         assert res_missing.status_code == status.HTTP_404_NOT_FOUND
 
+
+def test_get_game_by_shortcode():
+    two_hours_ago: datetime = datetime.utcnow() - timedelta(hours=2)
+    one_hour_ago: datetime = datetime.utcnow() - timedelta(hours=1)
+    now = datetime.utcnow()
+
+    game_1_id: str = "5a11d445-2b53-4047-8db5-d414d1c882c6"
+    game_2_id: str = "fc79d60b-ef95-4499-aaa7-04bced45516f"
+    game_3_id: str = "dd053768-267d-43fd-ada4-69cb144037aa"
+    game_1 = Game(
+        id=game_1_id, name="Game One", started_at=one_hour_ago, created_at=two_hours_ago
+    )
+    game_2 = Game(id=game_2_id, name="Game Two", created_at=one_hour_ago)
+    game_3 = Game(
+        id=game_3_id, name="Game Three", started_at=None, created_at=two_hours_ago
+    )
+    with TestEnvironment([game_1, game_2, game_3]) as client:
+        res_unauthorized = client.get(f"/v1/games/shortcode/{game_1_id[:4]}")
+        assert res_unauthorized.status_code == status.HTTP_401_UNAUTHORIZED
+
+        headers_ok = headers("user-1")
+        res_not_found = client.get(
+            f"/v1/games/shortcode/{game_1_id[:4]}", headers=headers_ok
+        )
+        assert res_not_found.status_code == status.HTTP_404_NOT_FOUND
+        body = res_not_found.get_json()
+        assert body["message"] == f"No unstarted game found with code: {game_1_id[:4]}"
+
+        headers_ok = headers("user-3")
+        res_ok = client.get(f"/v1/games/shortcode/{game_2_id[:4]}", headers=headers_ok)
+        assert res_ok.status_code == status.HTTP_200_OK
+        body = res_ok.get_json()
+        assert body["id"] == game_2_id
+        assert body["name"] == "Game Two"
+
+        headers_ok = headers("user-3")
+        res_ok = client.get(f"/v1/games/shortcode/{game_3_id[:4]}", headers=headers_ok)
+        assert res_ok.status_code == status.HTTP_200_OK
+        body = res_ok.get_json()
+        assert body["id"] == game_3_id
+        assert body["name"] == "Game Three"
+
+        res_missing = client.get(
+            f"/v1/games/shortcode/{new_id()[:4]}", headers=headers_ok
+        )
+        assert res_missing.status_code == status.HTTP_404_NOT_FOUND
+
+        res_invalid_shortcode_length = client.get(
+            f"/v1/games/shortcode/{new_id()[:6]}", headers=headers_ok
+        )
+        assert res_invalid_shortcode_length.status_code == status.HTTP_400_BAD_REQUEST
+        body1 = res_invalid_shortcode_length.get_json()
+        assert body1["message"] == "Invalid shortcode length"
+
+        res_invalid_shortcode_characters = client.get(
+            f"/v1/games/shortcode/€as%", headers=headers_ok
+        )
+        assert (
+            res_invalid_shortcode_characters.status_code == status.HTTP_400_BAD_REQUEST
+        )
+        body2 = res_invalid_shortcode_characters.get_json()
+        assert body2["message"] == "Shortcode contains invalid characters"

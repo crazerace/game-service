@@ -44,6 +44,13 @@ def find(id: str) -> Optional[Game]:
 
 
 @trace("game_repo")
+def find_by_shortcode(short_code: str) -> Optional[Game]:
+    return Game.query.filter(
+        Game.id.startswith(short_code), Game.started_at == None
+    ).first()
+
+
+@trace("game_repo")
 def delete(game: Game) -> None:
     for member in game.members:
         db.session.delete(member)

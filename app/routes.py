@@ -28,7 +28,7 @@ def add_game_member(game_id: str) -> flask.Response:
 @app.route("/v1/games/shortcode/<short_code>", methods=["GET"])
 @secured(JWT_SECRET)
 def get_game_by_shortcode(short_code: str) -> flask.Response:
-    return http.create_ok_response()
+    return controller.get_game_by_shortcode(short_code)
 
 
 @app.route("/v1/games/<game_id>", methods=["GET"])
