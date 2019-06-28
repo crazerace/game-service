@@ -12,44 +12,26 @@ from flask import Flask, jsonify, make_response, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from crazerace.http import status, instrumentation
+from crazerace.http.instrumentation import setup_instrumentation
 from crazerace.http.error import RequestError, NotFoundError, MethodNotAllowedError
 
 # Internal modules
 from app.config import AppConfig
-from app.config import REQUEST_ID_HEADER, SERVICE_NAME, SERVER_NAME
+from app.config import SERVICE_NAME, SERVICE_VERSION
 
 
 app = Flask(SERVICE_NAME)
 app.config.from_object(AppConfig)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+setup_instrumentation(app, name=SERVICE_NAME, version=SERVICE_VERSION)
 
 
 from app import routes
 from app import models
 
 
-_log = logging.getLogger("RequestLogger")
 error_log = logging.getLogger("ErrorHandler")
-
-
-@app.before_request
-def add_request_id() -> None:
-    """Adds a request id to an incomming request."""
-    instrumentation.add_request_id()
-
-
-@app.after_request
-def add_request_id_to_response(response: flask.Response) -> flask.Response:
-    """Adds request id header to each response.
-
-    :param response: Response to add header to.
-    :return: Response with header.
-    """
-    response.headers[instrumentation.REQUEST_ID_HEADER] = request.id
-    response.headers["Server"] = SERVER_NAME
-    response.headers["Date"] = f"{datetime.utcnow()}"
-    return response
 
 
 @app.errorhandler(RequestError)

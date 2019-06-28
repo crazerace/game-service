@@ -13,7 +13,6 @@ dictConfig(LOGGING_CONIFG)
 SERVICE_NAME: str = "game-service"
 SERVICE_VERSION: str = "1.0-RC"
 SERVER_NAME: str = f"{SERVICE_NAME}/{SERVICE_VERSION}"
-REQUEST_ID_HEADER: str = "X-Request-ID"
 TEST_MODE: bool = os.getenv("TEST_MODE", "0") == "1"
 DATETIME_FORMAT: str = "%Y-%m-%d %H:%M:%S.%f"
 JWT_SECRET: str = os.environ["JWT_SECRET"]
