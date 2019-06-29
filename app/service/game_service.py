@@ -26,21 +26,19 @@ from app.service import util, question_service, game_state_util
 
 
 @trace("game_service")
-def create_game(new_game: CreateGameDTO, user_id: str) -> None:
+def create_game(new_game: CreateGameDTO, user_id: str) -> GameInfoDTO:
     game = Game(
         id=new_game.game_id,
         name=new_game.name,
         created_at=new_game.created_at,
         members=[
             GameMember(
-                id=util.new_id(),
-                user_id=user_id,
-                game_id=new_game.game_id,
-                is_admin=True,
+                id=util.new_id(), user_id=user_id, game_id=new_game.game_id, is_admin=True
             )
         ],
     )
     game_repo.save(game)
+    return GameInfoDTO(id=game.id, name=game.name)
 
 
 @trace("game_service")
@@ -68,7 +66,7 @@ def get_game(id: str) -> GameDTO:
 
 
 @trace("game_service")
-def get_game_by_shortcode(short_code: str) -> GameDTO:
+def get_game_by_shortcode(short_code: str) -> GameInfoDTO:
     _assert_valid_shortcode(short_code)
     game = game_repo.find_by_shortcode(short_code)
     if not game:
@@ -149,9 +147,7 @@ def _map_members_to_dto(members: List[GameMember]) -> List[GameMemberDTO]:
     ]
 
 
-def _map_questions_to_game(
-    game_id: str, questions: List[Question]
-) -> List[GameQuestion]:
+def _map_questions_to_game(game_id: str, questions: List[Question]) -> List[GameQuestion]:
     return [GameQuestion(game_id=game_id, question_id=q.id) for q in questions]
 
 

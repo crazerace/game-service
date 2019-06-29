@@ -20,9 +20,21 @@ def test_create_game():
         headers_ok = headers(new_id())
         res = client.post("/v1/games", data=game, content_type=JSON, headers=headers_ok)
         assert res.status_code == status.HTTP_200_OK
+        assert res.get_json()["name"] == "MyGame"
+        assert res.get_json()["id"] == "asd123"
 
         game = game_repo.find("asd123")
         assert game.name == "MyGame"
+
+        game = json.dumps({"name": "gameWithoutId"})
+        res = client.post("/v1/games", data=game, content_type=JSON, headers=headers_ok)
+        assert res.status_code == status.HTTP_200_OK
+        assert res.get_json()["name"] == "gameWithoutId"
+        game_id = res.get_json()["id"]
+        assert len(game_id) == 36  # Check is UUID
+
+        game = game_repo.find(game_id)
+        assert game.name == "gameWithoutId"
 
         # Incorrect game data types
         game = json.dumps({"id": "asd123", "name": True})
@@ -324,8 +336,6 @@ def test_get_game_by_shortcode():
         res_invalid_shortcode_characters = client.get(
             f"/v1/games/shortcode/€as%", headers=headers_ok
         )
-        assert (
-            res_invalid_shortcode_characters.status_code == status.HTTP_400_BAD_REQUEST
-        )
+        assert res_invalid_shortcode_characters.status_code == status.HTTP_400_BAD_REQUEST
         body2 = res_invalid_shortcode_characters.get_json()
         assert body2["message"] == "Shortcode contains invalid characters"

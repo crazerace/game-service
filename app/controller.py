@@ -68,8 +68,8 @@ def create_game() -> flask.Response:
     user_id: str = request.user_id
     body = get_request_body("name")
     game = CreateGameDTO.fromdict(body)
-    game_service.create_game(game, user_id)
-    return http.create_ok_response()
+    game_info = game_service.create_game(game, user_id)
+    return http.create_response(game_info.todict())
 
 
 @trace("controller")
@@ -119,9 +119,7 @@ def get_members_next_question(game_id: str, member_id: str) -> flask.Response:
 @trace("controller")
 def add_position(game_id: str, member_id: str) -> flask.Response:
     user_id = request.user_id
-    position = PositionDTO.fromdict(
-        member_id, get_request_body("latitude", "longitude")
-    )
+    position = PositionDTO.fromdict(member_id, get_request_body("latitude", "longitude"))
     result = position_service.add_position(game_id, user_id, position)
     return http.create_response(result.todict())
 
