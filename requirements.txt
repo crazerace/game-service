@@ -6,4 +6,4 @@ Flask-Migrate==2.3.1
 geopy==1.19.0
 psycopg2== 2.7.7
 uwsgi==2.0.18
-https://github.com/crazerace/crazerace-py/archive/0.7.2.zip
+https://github.com/crazerace/crazerace-py/archive/0.7.3.zip
