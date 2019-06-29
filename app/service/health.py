@@ -29,4 +29,4 @@ def _db_connected() -> Tuple[str, bool]:
         return "UP", True
     except Exception as e:
         _log.error(str(e))
-        return "DOWN", True
+        return "DOWN", False
