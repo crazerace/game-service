@@ -31,8 +31,8 @@ def check_health() -> flask.Response:
 @trace("controller")
 def add_game_member(game_id: str) -> flask.Response:
     user_id: str = request.user_id
-    game_service.add_game_member(game_id, user_id)
-    return http.create_ok_response()
+    member = game_service.add_game_member(game_id, user_id)
+    return http.create_response(member.todict())
 
 
 @trace("controller")

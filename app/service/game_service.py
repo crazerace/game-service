@@ -61,7 +61,7 @@ def get_game(id: str) -> GameDTO:
         created_at=game.created_at,
         started_at=game.started_at,
         ended_at=game.ended_at,
-        members=_map_members_to_dto(game.members),
+        members=_map_members_to_dtos(game.members),
     )
 
 
@@ -84,10 +84,11 @@ def start_game(game_id: str, user_id: str, coordinate: CoordinateDTO) -> None:
 
 
 @trace("game_service")
-def add_game_member(game_id: str, user_id: str) -> None:
+def add_game_member(game_id: str, user_id: str) -> GameMemberDTO:
     game_state_util.assert_game_exists(game_id)
     member = GameMember(id=util.new_id(), game_id=game_id, user_id=user_id)
     member_repo.add_member(member)
+    return _member_to_dto(member)
 
 
 @trace("game_service")
@@ -133,18 +134,19 @@ def _find_game_and_assert_can_be_started(game_id: str, user_id: str) -> Game:
     return game
 
 
-def _map_members_to_dto(members: List[GameMember]) -> List[GameMemberDTO]:
-    return [
-        GameMemberDTO(
-            id=m.id,
-            game_id=m.game_id,
-            user_id=m.user_id,
-            is_admin=m.is_admin,
-            is_ready=m.is_ready,
-            created_at=m.created_at,
-        )
-        for m in members
-    ]
+def _map_members_to_dtos(members: List[GameMember]) -> List[GameMemberDTO]:
+    return [_member_to_dto(m) for m in members]
+
+
+def _member_to_dto(member: GameMember) -> GameMemberDTO:
+    return GameMemberDTO(
+        id=member.id,
+        game_id=member.game_id,
+        user_id=member.user_id,
+        is_admin=member.is_admin,
+        is_ready=member.is_ready,
+        created_at=member.created_at,
+    )
 
 
 def _map_questions_to_game(game_id: str, questions: List[Question]) -> List[GameQuestion]:

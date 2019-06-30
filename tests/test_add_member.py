@@ -34,12 +34,19 @@ def test_add_game_member():
         headers_ok = headers(user_id)
         res = client.post(f"/v1/games/{game_id}/members", headers=headers_ok)
         assert res.status_code == status.HTTP_200_OK
+        body = res.get_json()
+        assert body["gameId"] == game_id
+        assert body["userId"] == user_id
+        assert not body["isAdmin"]
+        assert not body["isReady"]
+        assert body["createdAt"] is not None
+        member_id = body["id"]
+        assert len(member_id) == 36  # Check is UUID
+
         stored_game = game_repo.find(game_id)
         assert len(stored_game.members) == 2
-        new_member = [member for member in stored_game.members if not member.is_admin][
-            0
-        ]
-        assert len(new_member.id) > 0
+        new_member = [member for member in stored_game.members if not member.is_admin][0]
+        assert new_member.id == member_id
         assert new_member.user_id == user_id
         assert new_member.game_id == game_id
         assert new_member.is_admin == False

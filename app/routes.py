@@ -12,7 +12,6 @@ from app.config import JWT_SECRET
 from app import controller
 
 
-# Create game
 @app.route("/v1/games", methods=["POST"])
 @secured(JWT_SECRET)
 def create_game() -> flask.Response:
