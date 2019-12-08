@@ -22,7 +22,7 @@ from app.models.dto import (
     GameInfoDTO,
 )
 from app.repository import game_repo, member_repo, question_repo
-from app.service import util, question_service, game_state_util
+from app.service import util, question_service, user_service, game_state_util
 
 
 @trace("game_service")
@@ -142,7 +142,7 @@ def _member_to_dto(member: GameMember) -> GameMemberDTO:
     return GameMemberDTO(
         id=member.id,
         game_id=member.game_id,
-        user_id=member.user_id,
+        user=user_service.fetch_user(member.user_id),
         is_admin=member.is_admin,
         is_ready=member.is_ready,
         created_at=member.created_at,

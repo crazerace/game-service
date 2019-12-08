@@ -2,12 +2,13 @@
 import json
 from datetime import datetime, timedelta
 
-
 # 3rd party modules
+import requests_mock
 from crazerace.http import status
 
 # Intenal modules
 from tests import TestEnvironment, JSON, headers, new_id
+from app.config import USER_SERVICE_URL
 from app.models import Game, GameMember, GameQuestion, Question
 from app.repository import game_repo
 from app.service import game_service
@@ -233,51 +234,82 @@ def test_get_game():
         ],
         questions=[GameQuestion(game_id=game_3_id, question_id=question_2.id)],
     )
-    with TestEnvironment([question_1, question_2, game_1, game_2, game_3]) as client:
-        res_unauthorized = client.get(f"/v1/games/{game_1_id}")
-        assert res_unauthorized.status_code == status.HTTP_401_UNAUTHORIZED
+    with requests_mock.mock() as m:
+        m.get(
+            f"{USER_SERVICE_URL}/v1/users/user-1",
+            json={
+                "id": "user-1",
+                "username": "User 1",
+                "createdAt": "2019-01-01 12:12:12.222",
+            },
+            headers={"Content-Type": "application/json"},
+        )
+        m.get(
+            f"{USER_SERVICE_URL}/v1/users/user-2",
+            json={
+                "id": "user-2",
+                "username": "User 2",
+                "createdAt": "2019-01-01 12:12:12.222",
+            },
+            headers={"Content-Type": "application/json"},
+        )
+        with TestEnvironment([question_1, question_2, game_1, game_2, game_3]) as client:
+            res_unauthorized = client.get(f"/v1/games/{game_1_id}")
+            assert res_unauthorized.status_code == status.HTTP_401_UNAUTHORIZED
 
-        headers_ok = headers("user-1")
-        res_ok = client.get(f"/v1/games/{game_1_id}", headers=headers_ok)
-        assert res_ok.status_code == status.HTTP_200_OK
-        body = res_ok.get_json()
-        assert body["id"] == game_1_id
-        assert body["name"] == "Game One"
-        assert body["createdAt"] == f"{two_hours_ago}"
-        assert body["startedAt"] == f"{one_hour_ago}"
-        assert body["endedAt"] == None
-        assert body["status"] == "STARTED"
-        assert body["questions"] == 2
-        assert len(body["members"]) == 2
+            headers_ok = headers("user-1")
+            res_ok = client.get(f"/v1/games/{game_1_id}", headers=headers_ok)
+            assert res_ok.status_code == status.HTTP_200_OK
+            body = res_ok.get_json()
+            assert body["id"] == game_1_id
+            assert body["name"] == "Game One"
+            assert body["createdAt"] == f"{two_hours_ago}"
+            assert body["startedAt"] == f"{one_hour_ago}"
+            assert body["endedAt"] == None
+            assert body["status"] == "STARTED"
+            assert body["questions"] == 2
+            assert len(body["members"]) == 2
 
-        headers_ok = headers("user-3")
-        res_ok = client.get(f"/v1/games/{game_2_id}", headers=headers_ok)
-        assert res_ok.status_code == status.HTTP_200_OK
-        body = res_ok.get_json()
-        assert body["id"] == game_2_id
-        assert body["name"] == "Game Two"
-        assert body["createdAt"] == f"{one_hour_ago}"
-        assert body["startedAt"] == None
-        assert body["endedAt"] == None
-        assert body["status"] == "CREATED"
-        assert body["questions"] == 1
-        assert len(body["members"]) == 2
+            member_1 = body["members"][0]
+            assert member_1["id"] == "member-1-1"
+            assert member_1["isAdmin"] == True
+            assert member_1["user"]["id"] == "user-1"
+            assert member_1["user"]["username"] == "User 1"
 
-        headers_ok = headers("user-3")
-        res_ok = client.get(f"/v1/games/{game_3_id}", headers=headers_ok)
-        assert res_ok.status_code == status.HTTP_200_OK
-        body = res_ok.get_json()
-        assert body["id"] == game_3_id
-        assert body["name"] == "Game Three"
-        assert body["createdAt"] == f"{two_hours_ago}"
-        assert body["startedAt"] == f"{one_hour_ago}"
-        assert body["endedAt"] == f"{now}"
-        assert body["status"] == "ENDED"
-        assert body["questions"] == 1
-        assert len(body["members"]) == 2
+            member_2 = body["members"][1]
+            assert member_2["id"] == "member-1-2"
+            assert member_2["isAdmin"] == False
+            assert member_2["user"]["id"] == "user-2"
+            assert member_2["user"]["username"] == "User 2"
 
-        res_missing = client.get(f"/v1/games/{new_id()}", headers=headers_ok)
-        assert res_missing.status_code == status.HTTP_404_NOT_FOUND
+            headers_ok = headers("user-3")
+            res_ok = client.get(f"/v1/games/{game_2_id}", headers=headers_ok)
+            assert res_ok.status_code == status.HTTP_200_OK
+            body = res_ok.get_json()
+            assert body["id"] == game_2_id
+            assert body["name"] == "Game Two"
+            assert body["createdAt"] == f"{one_hour_ago}"
+            assert body["startedAt"] == None
+            assert body["endedAt"] == None
+            assert body["status"] == "CREATED"
+            assert body["questions"] == 1
+            assert len(body["members"]) == 2
+
+            headers_ok = headers("user-3")
+            res_ok = client.get(f"/v1/games/{game_3_id}", headers=headers_ok)
+            assert res_ok.status_code == status.HTTP_200_OK
+            body = res_ok.get_json()
+            assert body["id"] == game_3_id
+            assert body["name"] == "Game Three"
+            assert body["createdAt"] == f"{two_hours_ago}"
+            assert body["startedAt"] == f"{one_hour_ago}"
+            assert body["endedAt"] == f"{now}"
+            assert body["status"] == "ENDED"
+            assert body["questions"] == 1
+            assert len(body["members"]) == 2
+
+            res_missing = client.get(f"/v1/games/{new_id()}", headers=headers_ok)
+            assert res_missing.status_code == status.HTTP_404_NOT_FOUND
 
 
 def test_get_game_by_shortcode():

@@ -7,6 +7,9 @@ from uuid import uuid4
 # 3rd party libraries
 from crazerace.http.error import BadRequestError
 
+# Internal modules
+from app.models.external import UserDTO
+
 
 @dataclass
 class QuestionText:
@@ -104,7 +107,7 @@ class CreateGameDTO:
 class GameMemberDTO:
     id: str
     game_id: str
-    user_id: str
+    user: UserDTO
     is_admin: bool
     is_ready: bool
     created_at: datetime
@@ -113,7 +116,7 @@ class GameMemberDTO:
         return {
             "id": self.id,
             "gameId": self.game_id,
-            "userId": self.user_id,
+            "user": self.user.todict(),
             "isAdmin": self.is_admin,
             "isReady": self.is_ready,
             "createdAt": f"{self.created_at}",
